@@ -309,12 +309,12 @@
 
     const key = monthKey(selectedStaff);
 
-    fetch(`${COUNTER_BASE}/get/${key}`)
+    fetch(`${COUNTER_BASE}/get/${key}?_=${Date.now()}`, {cache: 'no-store'})
       .then(r => r.ok ? r.json() : { value: 0 })
       .then(data => {
         const current = parseInt(data.value || 0, 10);
         const newTotal = current + selectedStars;
-        return fetch(`${COUNTER_BASE}/set/${key}?value=${newTotal}`)
+        return fetch(`${COUNTER_BASE}/set/${key}?value=${newTotal}&_=${Date.now()}`, {cache: 'no-store'})
           .then(() => newTotal);
       })
       .then(newTotal => {

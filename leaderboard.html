@@ -184,7 +184,7 @@
 
   function fetchWithRetry(name, attempt){
     attempt = attempt || 1;
-    return fetch(`${COUNTER_BASE}/get/${monthKey(name)}`)
+    return fetch(`${COUNTER_BASE}/get/${monthKey(name)}?_=${Date.now()}`, {cache: 'no-store'})
       .then(r => {
         if(r.status === 404) return { value: 0 }; // ما عنده تقييمات بعد فعليًا
         if(!r.ok) throw new Error('bad status');
