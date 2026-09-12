@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بطاقة ولاء تنوركو</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #EFE3D2;
+    --bg2: #E4D5BC;
+    --panel: #F7EFE1;
+    --flame: #C1461F;
+    --flame-dim: #93330F;
+    --gold: #C1932E;
+    --cream: #4A2A16;
+    --muted: #9C6F4A;
+    --line: #D8C4A6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Cairo', sans-serif;
+    background: var(--bg);
+    color:var(--cream);
+    padding:28px 16px 60px;
+  }
+  .app{max-width:420px; margin:0 auto;}
+  header{text-align:center; margin-bottom:22px;}
+  .mark{
+    width:56px; height:56px; margin:0 auto 10px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background: var(--flame);
+    box-shadow: 0 2px 8px rgba(147,51,15,0.25);
+    font-size:26px;
+  }
+  h1{font-size:22px; font-weight:900; margin:0 0 4px; letter-spacing:.5px; color:var(--flame-dim);}
+  .sub{color:var(--muted); font-size:13.5px; margin:0;}
+
+  .tabs{
+    display:flex; gap:6px; background:var(--bg2);
+    border:1px solid var(--line); border-radius:14px; padding:5px; margin-bottom:20px;
+  }
+  .tab{
+    flex:1; text-align:center; padding:10px 0; border-radius:10px;
+    font-weight:700; font-size:14.5px; color:var(--muted); cursor:pointer;
+    transition:.2s;
+  }
+  .tab.active{ background:var(--flame); color:#F7EFE1; box-shadow:0 4px 12px rgba(147,51,15,0.25);}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:22px 18px;
+    box-shadow: 0 4px 20px rgba(147,51,15,0.06);
+  }
+  .hidden{display:none !important;}
+
+  label{display:block; font-size:13px; color:var(--muted); margin:0 0 6px;}
+  input[type=tel], input[type=text], input[type=password]{
+    width:100%; padding:13px 14px; margin-bottom:14px;
+    background:#fff; border:1px solid var(--line); border-radius:12px;
+    color:var(--cream); font-family:'Cairo',sans-serif; font-size:15px; outline:none;
+  }
+  input:focus{border-color:var(--flame);}
+  button{
+    width:100%; padding:14px; border:none; border-radius:12px;
+    background:var(--flame); color:#F7EFE1; font-family:'Cairo',sans-serif;
+    font-weight:700; font-size:15px; cursor:pointer; transition:.15s;
+  }
+  button:active{transform:scale(.98);}
+  button.secondary{
+    background:transparent; border:1px solid var(--line); color:var(--flame-dim); margin-top:8px;
+  }
+  button.gold{ background:var(--gold); color:#4A2A16; }
+  button:disabled{opacity:.4; cursor:default;}
+
+  .card-visual{ text-align:center; margin:6px 0 18px; }
+  .stamps{ display:flex; justify-content:center; gap:10px; margin:16px 0 10px; }
+  .stamp{
+    width:44px; height:44px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:19px;
+    border:1.5px solid var(--line); color:var(--muted); background:#fff;
+  }
+  .stamp.filled{
+    border-color:var(--flame); background:var(--flame);
+    color:#F7EFE1;
+  }
+  .stamp.reward{ border-color:var(--gold); color:var(--gold); }
+  .stamp.reward.filled{ background:var(--gold); color:#4A2A16;}
+  .status-line{ font-size:14.5px; font-weight:700; margin:4px 0 16px; }
+  .status-line.ready{ color:var(--gold); font-size:16px; }
+  .hint{ font-size:12.5px; color:var(--muted); text-align:center; margin-top:4px; }
+
+  .customer-name{ font-weight:700; font-size:17px; margin-bottom:2px; }
+  .customer-phone{ color:var(--muted); font-size:13.5px; margin-bottom:14px; direction:ltr; display:inline-block;}
+
+  .msg{ font-size:13.5px; text-align:center; margin:6px 0 14px; color:var(--muted); }
+  .msg.error{ color:#E8836A; }
+  .msg.success{ color:#8FC48A; }
+  .loading-dot{ font-size:13px; color:var(--muted); text-align:center; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="mark">🔥</div>
+    <h1>تنوركو</h1>
+    <p class="sub">بطاقة الولاء الرقمية — 4 وجبات والخامسة مجانًا</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" id="tabCustomer" onclick="switchTab('customer')">الزبون</div>
+    <div class="tab" id="tabStaff" onclick="switchTab('staff')">الموظف</div>
+  </div>
+
+  <!-- CUSTOMER VIEW -->
+  <div id="customerView" class="panel">
+    <div id="customerForm">
+      <label>رقم جوالك</label>
+      <input type="tel" id="custPhone" placeholder="05xxxxxxxx" inputmode="numeric">
+      <label>اسمك (يظهر لك بهالمرة بس، ما يُحفظ)</label>
+      <input type="text" id="custName" placeholder="اكتب اسمك">
+      <button onclick="openCustomerCard()">عرض بطاقتي</button>
+      <p id="custMsg" class="msg"></p>
+    </div>
+
+    <div id="customerCard" class="hidden">
+      <div class="card-visual">
+        <div class="customer-name" id="ccName"></div>
+        <div class="customer-phone" id="ccPhone"></div>
+        <div class="stamps" id="ccStamps"></div>
+        <div class="status-line" id="ccStatus"></div>
+      </div>
+      <button class="secondary" onclick="backToForm()">بطاقة رقم آخر</button>
+    </div>
+  </div>
+
+  <!-- STAFF VIEW -->
+  <div id="staffView" class="panel hidden">
+    <div id="pinGate">
+      <label>كلمة مرور الموظف</label>
+      <input type="password" id="staffPin" placeholder="••••" inputmode="numeric">
+      <button onclick="checkPin()">دخول</button>
+      <p id="pinMsg" class="msg"></p>
+    </div>
+
+    <div id="staffTools" class="hidden">
+      <label>أدخل رقم جوال الزبون</label>
+      <input type="tel" id="staffPhone" placeholder="05xxxxxxxx" inputmode="numeric">
+      <button onclick="staffLookup()">بحث</button>
+      <p id="staffMsg" class="msg"></p>
+
+      <div id="staffCard" class="hidden" style="margin-top:16px;">
+        <div class="customer-phone" id="scPhone"></div>
+        <div class="stamps" id="scStamps"></div>
+        <div class="status-line" id="scStatus"></div>
+        <button id="scAction"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   كلمة مرور الموظف
+   ============================================================ */
+const STAFF_PIN = "tanor2580";
+
+/* ============================================================
+   نظام الحفظ: خدمة عداد مجانية بدون تسجيل
+   ============================================================ */
+const COUNTER_BASE = 'https://countapi.mileshilliard.com/api/v1';
+
+function loyaltyKey(phone){
+  return `tanourko_loyalty_${phone}`;
+}
+
+async function getVisits(phone){
+  try{
+    const res = await fetch(`${COUNTER_BASE}/get/${loyaltyKey(phone)}?_=${Date.now()}`, {cache:'no-store'});
+    if(res.status === 404) return 0;
+    if(!res.ok) throw new Error('bad status');
+    const data = await res.json();
+    return parseInt(data.value || 0, 10);
+  }catch(e){
+    return 0;
+  }
+}
+
+async function setVisits(phone, value){
+  try{
+    await fetch(`${COUNTER_BASE}/set/${loyaltyKey(phone)}?value=${value}&_=${Date.now()}`, {cache:'no-store'});
+  }catch(e){}
+}
+
+function switchTab(t){
+  document.getElementById('tabCustomer').classList.toggle('active', t==='customer');
+  document.getElementById('tabStaff').classList.toggle('active', t==='staff');
+  document.getElementById('customerView').classList.toggle('hidden', t!=='customer');
+  document.getElementById('staffView').classList.toggle('hidden', t!=='staff');
+}
+
+function normalizePhone(p){ return p.replace(/[^0-9]/g,''); }
+
+function stampsHtml(visits){
+  let html = '';
+  for(let i=1;i<=4;i++){
+    html += `<div class="stamp ${i<=visits ? 'filled':''}">${i<=visits ? '🔥':''}</div>`;
+  }
+  html += `<div class="stamp reward ${visits>=4 ? 'filled':''}">${visits>=4 ? '⭐':'★'}</div>`;
+  return html;
+}
+
+/* ---------- CUSTOMER ---------- */
+async function openCustomerCard(){
+  const phone = normalizePhone(document.getElementById('custPhone').value);
+  const name = document.getElementById('custName').value.trim() || 'زبون';
+  const msg = document.getElementById('custMsg');
+  msg.textContent = ''; msg.className = 'msg';
+  if(phone.length < 9){ msg.textContent = 'أدخل رقم جوال صحيح'; msg.className='msg error'; return; }
+
+  msg.textContent = 'جاري التحميل...'; msg.className = 'loading-dot';
+  const visits = await getVisits(phone);
+  msg.textContent = '';
+
+  document.getElementById('ccName').textContent = name;
+  document.getElementById('ccPhone').textContent = phone;
+  document.getElementById('ccStamps').innerHTML = stampsHtml(visits);
+  const status = document.getElementById('ccStatus');
+  if(visits >= 4){
+    status.textContent = '🎉 مبروك! وجبتك المجانية تنتظرك';
+    status.className = 'status-line ready';
+  } else {
+    status.textContent = `${visits} من 4 — بقي ${4-visits} لوجبتك المجانية`;
+    status.className = 'status-line';
+  }
+
+  document.getElementById('customerForm').classList.add('hidden');
+  document.getElementById('customerCard').classList.remove('hidden');
+}
+function backToForm(){
+  document.getElementById('customerForm').classList.remove('hidden');
+  document.getElementById('customerCard').classList.add('hidden');
+  document.getElementById('custMsg').textContent = '';
+}
+
+/* ---------- STAFF ---------- */
+function checkPin(){
+  const val = document.getElementById('staffPin').value;
+  const msg = document.getElementById('pinMsg');
+  if(val === STAFF_PIN){
+    document.getElementById('pinGate').classList.add('hidden');
+    document.getElementById('staffTools').classList.remove('hidden');
+  } else {
+    msg.textContent = 'كلمة مرور غير صحيحة';
+    msg.className = 'msg error';
+  }
+}
+
+async function staffLookup(){
+  const phone = normalizePhone(document.getElementById('staffPhone').value);
+  await showStaffCustomer(phone);
+}
+
+async function showStaffCustomer(phone){
+  const msg = document.getElementById('staffMsg');
+  msg.textContent='جاري البحث...'; msg.className='loading-dot';
+  document.getElementById('staffCard').classList.add('hidden');
+
+  if(phone.length < 9){ msg.textContent='رقم جوال غير صالح'; msg.className='msg error'; return; }
+
+  const visits = await getVisits(phone);
+  msg.textContent = '';
+  renderStaffCard(phone, visits);
+}
+
+function renderStaffCard(phone, visits){
+  document.getElementById('scPhone').textContent = phone;
+  document.getElementById('scStamps').innerHTML = stampsHtml(visits);
+  const status = document.getElementById('scStatus');
+  const action = document.getElementById('scAction');
+
+  if(visits >= 4){
+    status.textContent = '🎉 مبروك! وجبتك المجانية تنتظرك';
+    status.className = 'status-line ready';
+    action.textContent = '⭐ استلام الوجبة المجانية';
+    action.className = 'gold';
+    action.onclick = async ()=>{
+      action.disabled = true;
+      await setVisits(phone, 0);
+      action.disabled = false;
+      renderStaffCard(phone, 0);
+    };
+  } else {
+    status.textContent = `${visits} من 4 زيارات`;
+    status.className = 'status-line';
+    action.textContent = '➕ تسجيل زيارة جديدة';
+    action.className = '';
+    action.onclick = async ()=>{
+      action.disabled = true;
+      const newVisits = visits + 1;
+      await setVisits(phone, newVisits);
+      action.disabled = false;
+      renderStaffCard(phone, newVisits);
+    };
+  }
+  document.getElementById('staffCard').classList.remove('hidden');
+}
+</script>
+</body>
+</html>

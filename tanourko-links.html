@@ -102,6 +102,8 @@
   }
 
   .loyalty{
+    display:block;
+    text-decoration:none;
     background:linear-gradient(135deg, var(--gold) 0%, var(--gold-pale) 100%);
     color:var(--ink);
     font-weight:800;
@@ -110,6 +112,11 @@
     border-radius:16px;
     margin:20px 0 26px;
     box-shadow:0 10px 20px rgba(0,0,0,0.25);
+    cursor:pointer;
+    transition:transform 0.15s ease;
+  }
+  .loyalty:active{
+    transform:scale(0.97);
   }
 
   .divider{
@@ -448,7 +455,7 @@
     <div class="badge" data-ar="روابطنا" data-en="Our Links">روابطنا</div>
   </div>
 
-  <div class="loyalty" data-ar="بطاقة ولاء: 4 وجبات والخامسة مجانًا 🎁" data-en="Loyalty Card: 4 meals &amp; the 5th free 🎁">بطاقة ولاء: 4 وجبات والخامسة مجانًا 🎁</div>
+  <a class="loyalty" href="tanourko-loyalty.html" target="_blank" rel="noopener" data-ar="بطاقة ولاء: 4 وجبات والخامسة مجانًا 🎁" data-en="Loyalty Card: 4 meals &amp; the 5th free 🎁">بطاقة ولاء: 4 وجبات والخامسة مجانًا 🎁</a>
 
   <div class="divider" data-ar="— تواصلوا معنا —" data-en="— Contact Us —">— تواصلوا معنا —</div>
 
