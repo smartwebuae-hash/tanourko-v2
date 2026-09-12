@@ -121,7 +121,7 @@
   <div id="customerView" class="panel">
     <div id="customerForm">
       <label>رقم جوالك</label>
-      <input type="tel" id="custPhone" placeholder="05xxxxxxxx" inputmode="numeric">
+      <input type="text" id="custPhone" placeholder="05xxxxxxxx" inputmode="numeric" autocomplete="off">
       <label>اسمك (يظهر لك بهالمرة بس، ما يُحفظ)</label>
       <input type="text" id="custName" placeholder="اكتب اسمك">
       <button onclick="openCustomerCard()">عرض بطاقتي</button>
@@ -150,7 +150,7 @@
 
     <div id="staffTools" class="hidden">
       <label>أدخل رقم جوال الزبون</label>
-      <input type="tel" id="staffPhone" placeholder="05xxxxxxxx" inputmode="numeric">
+      <input type="text" id="staffPhone" placeholder="05xxxxxxxx" inputmode="numeric" autocomplete="off">
       <button onclick="staffLookup()">بحث</button>
       <p id="staffMsg" class="msg"></p>
 
