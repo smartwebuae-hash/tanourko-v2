@@ -107,6 +107,38 @@
   .rating-grid .chip-btn[data-rating="متوسط"].active{background:var(--gold);border-color:var(--gold);color:var(--ink);}
   .rating-grid .chip-btn[data-rating="ضعيف"].active{background:#e53935;border-color:#e53935;color:#fff;}
 
+  .star-picker{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    direction:ltr;
+    padding:10px 0;
+  }
+  .star-col{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+  }
+  .star-num{
+    font-size:13px;
+    font-weight:800;
+    color:var(--gold-pale);
+    opacity:0.85;
+  }
+  .star-icon{
+    font-size:48px;
+    color:rgba(250,241,226,0.35);
+    cursor:pointer;
+    transition:transform .15s ease, color .15s ease;
+    line-height:1;
+  }
+  .star-icon.filled{
+    color:var(--gold);
+    text-shadow:0 0 14px rgba(240,172,63,0.7);
+  }
+  .star-icon:active{transform:scale(1.15);}
+
   textarea{
     width:100%;
     background:rgba(255,255,255,0.08);
@@ -180,11 +212,12 @@
 
   <div class="step">
     <div class="step-label">٢) كيف تقيّم الخدمة؟</div>
-    <div class="chip-grid rating-grid" id="ratingGrid">
-      <button class="chip-btn" data-rating="ممتاز">🌟 ممتاز</button>
-      <button class="chip-btn" data-rating="جيد">🙂 جيد</button>
-      <button class="chip-btn" data-rating="متوسط">😐 متوسط</button>
-      <button class="chip-btn" data-rating="ضعيف">😕 ضعيف</button>
+    <div class="star-picker" id="starPicker">
+      <div class="star-col"><span class="star-num">1</span><span class="star-icon" data-star="1">☆</span></div>
+      <div class="star-col"><span class="star-num">2</span><span class="star-icon" data-star="2">☆</span></div>
+      <div class="star-col"><span class="star-num">3</span><span class="star-icon" data-star="3">☆</span></div>
+      <div class="star-col"><span class="star-num">4</span><span class="star-icon" data-star="4">☆</span></div>
+      <div class="star-col"><span class="star-num">5</span><span class="star-icon" data-star="5">☆</span></div>
     </div>
   </div>
 
@@ -219,11 +252,11 @@
   }
 
   let selectedStaff = null;
-  let selectedRating = null;
+  let selectedStars = 0;
   const submitBtn = document.getElementById('submitBtn');
 
   function checkReady(){
-    submitBtn.disabled = !(selectedStaff && selectedRating);
+    submitBtn.disabled = !(selectedStaff && selectedStars > 0);
   }
 
   document.querySelectorAll('#staffGrid .chip-btn').forEach(btn=>{
@@ -235,22 +268,62 @@
     });
   });
 
-  document.querySelectorAll('#ratingGrid .chip-btn').forEach(btn=>{
-    btn.addEventListener('click', function(){
-      document.querySelectorAll('#ratingGrid .chip-btn').forEach(b=>b.classList.remove('active'));
-      this.classList.add('active');
-      selectedRating = this.dataset.rating;
+  // اختيار النجوم
+  const starIcons = document.querySelectorAll('#starPicker .star-icon');
+  starIcons.forEach(icon=>{
+    icon.addEventListener('click', function(){
+      selectedStars = parseInt(this.dataset.star, 10);
+      starIcons.forEach(i=>{
+        i.textContent = (parseInt(i.dataset.star,10) <= selectedStars) ? '★' : '☆';
+        i.classList.toggle('filled', parseInt(i.dataset.star,10) <= selectedStars);
+      });
       checkReady();
     });
   });
 
+  // خدمة العداد المجانية (بدون تسجيل) - لحساب مجموع نجوم كل موظف لهذا الشهر
+  const COUNTER_BASE = 'https://countapi.mileshilliard.com/api/v1';
+
+  function monthKey(staffName){
+    const d = new Date();
+    const monthStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    const safeName = encodeURIComponent(staffName);
+    return `tanourko_${safeName}_${monthStr}`;
+  }
+
   submitBtn.addEventListener('click', function(){
-    if(!selectedStaff || !selectedRating) return;
+    if(!selectedStaff || !selectedStars) return;
     const notes = document.getElementById('notesBox').value.trim();
-    let msg = `تقييم خدمة تنورك\nالموظف: ${selectedStaff}\nالتقييم: ${selectedRating}`;
-    if(notes){ msg += `\nملاحظات: ${notes}`; }
-    const url = 'https://wa.me/971500888917?text=' + encodeURIComponent(msg);
-    window.open(url, '_blank');
+    const starsText = '⭐'.repeat(selectedStars) + '☆'.repeat(5-selectedStars);
+
+    // نفتح نافذة فاضية فورًا (قبل أي انتظار) عشان متصفح آيفون ما يمنعها
+    const waWindow = window.open('', '_blank');
+
+    function sendToWhatsApp(extraLine){
+      let msg = `تقييم خدمة تنورك\nالموظف: ${selectedStaff}\nالتقييم: ${starsText} (${selectedStars}/5)`;
+      if(extraLine){ msg += `\n${extraLine}`; }
+      if(notes){ msg += `\nملاحظات: ${notes}`; }
+      const url = 'https://wa.me/971500888917?text=' + encodeURIComponent(msg);
+      if(waWindow){ waWindow.location.href = url; } else { window.open(url, '_blank'); }
+    }
+
+    const key = monthKey(selectedStaff);
+
+    fetch(`${COUNTER_BASE}/get/${key}`)
+      .then(r => r.ok ? r.json() : { value: 0 })
+      .then(data => {
+        const current = parseInt(data.value || 0, 10);
+        const newTotal = current + selectedStars;
+        return fetch(`${COUNTER_BASE}/set/${key}?value=${newTotal}`)
+          .then(() => newTotal);
+      })
+      .then(newTotal => {
+        sendToWhatsApp(`⭐ مجموع نجوم ${selectedStaff} هذا الشهر: ${newTotal}`);
+      })
+      .catch(() => {
+        // لو صار خطأ بالاتصال، أرسل الرسالة عادي بدون المجموع
+        sendToWhatsApp('');
+      });
   });
 </script>
 
