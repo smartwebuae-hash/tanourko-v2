@@ -182,26 +182,42 @@
   const now = new Date();
   document.getElementById('monthLabel').textContent = `شهر ${monthNames[now.getMonth()]} ${now.getFullYear()}`;
 
+  function fetchWithRetry(name, attempt){
+    attempt = attempt || 1;
+    return fetch(`${COUNTER_BASE}/get/${monthKey(name)}`)
+      .then(r => {
+        if(r.status === 404) return { value: 0 }; // ما عنده تقييمات بعد فعليًا
+        if(!r.ok) throw new Error('bad status');
+        return r.json();
+      })
+      .then(data => ({ name: name, total: parseInt(data.value || 0, 10), failed: false }))
+      .catch(() => {
+        if(attempt < 2){
+          return fetchWithRetry(name, attempt + 1);
+        }
+        return { name: name, total: 0, failed: true }; // فشل فعليًا بعد محاولتين
+      });
+  }
+
   function loadRanking(){
     const content = document.getElementById('content');
     content.innerHTML = '<div class="loading">جاري تحميل الترتيب...</div>';
 
-    const promises = STAFF_NAMES.map(name =>
-      fetch(`${COUNTER_BASE}/get/${monthKey(name)}`)
-        .then(r => r.ok ? r.json() : { value: 0 })
-        .then(data => ({ name: name, total: parseInt(data.value || 0, 10) }))
-        .catch(() => ({ name: name, total: 0 }))
-    );
+    const promises = STAFF_NAMES.map(name => fetchWithRetry(name));
 
     Promise.all(promises).then(results => {
-      results.sort((a,b) => b.total - a.total);
+      const failedOnes = results.filter(r => r.failed);
+      const okResults = results.filter(r => !r.failed);
+      okResults.sort((a,b) => b.total - a.total);
+
       const medals = ['🥇','🥈','🥉'];
       let html = '<div class="rank-list">';
-      results.forEach((r, i) => {
-        if(r.total === 0) return; // نتجاهل الموظفين اللي ما عندهم أي تقييم بعد
-        const medal = medals[i] || `#${i+1}`;
+      let shown = 0;
+      okResults.forEach((r) => {
+        if(r.total === 0) return; // نتجاهل الموظفين اللي فعليًا صفر (مو اللي فشل التحميل)
+        const medal = medals[shown] || `#${shown+1}`;
         html += `
-          <div class="rank-card ${i===0 ? 'top1' : ''}">
+          <div class="rank-card ${shown===0 ? 'top1' : ''}">
             <div class="rank-medal">${medal}</div>
             <div class="rank-info">
               <div class="rank-name">${r.name}</div>
@@ -209,11 +225,15 @@
             </div>
             <div class="rank-total">${r.total}</div>
           </div>`;
+        shown++;
       });
       html += '</div>';
 
-      const anyData = results.some(r => r.total > 0);
-      if(!anyData){
+      if(failedOnes.length > 0){
+        html += `<div class="loading" style="margin-top:14px;color:#f8d896;">⚠️ تعذّر تحميل بيانات: ${failedOnes.map(f=>f.name).join('، ')} — اضغط "تحديث الترتيب" لإعادة المحاولة</div>`;
+      }
+
+      if(shown === 0 && failedOnes.length === 0){
         html = '<div class="loading">ما فيه تقييمات مسجّلة هذا الشهر بعد</div>';
       }
       content.innerHTML = html;
