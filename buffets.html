@@ -127,11 +127,12 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <div class="bar" role="toolbar" aria-label="أدوات المنيو">
   <select id="menuSel" aria-label="اختر البوفيه"></select>
   <span class="grow"></span>
-  <span class="dirty" id="dirty" hidden>تعديلات غير محفوظة</span>
-  <button class="btn" id="editBtn" aria-pressed="false">تعديل</button>
-  <button class="btn primary" id="saveBtn" hidden>حفظ</button>
-  <button class="btn" id="pdfBtn">PDF / واتساب</button>
-  <button class="btn" id="moreBtn">إعدادات</button>
+  <span class="dirty" id="dirty" hidden></span>
+  <button class="btn" id="editBtn" hidden></button>
+  <button class="btn primary" id="saveBtn" hidden></button>
+  <button class="btn primary" id="pdfBtn">PDF / واتساب</button>
+  <a class="btn" id="callBtn" href="tel:+971500888916" style="text-decoration:none;color:inherit">اتصال للحجز</a>
+  <button class="btn" id="moreBtn" hidden></button>
 </div>
 <p class="hint" id="hint" hidden>اضغط على أي اسم أو صورة أو رقم لتعديله. لإضافة أكلة اضغط «+ إضافة صنف».</p>
 <main class="pages" id="pages"></main>
@@ -148,10 +149,15 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 var KEY='tanourko-buffet-menu-draft';
 var embedded=JSON.parse(document.getElementById('menu-data').textContent);
 var S=embedded, dirty=false, editing=false, artifactNs=null, downloadsNs=null, readOnly=false;
+var ADMIN=!!window.BUFFET_ADMIN;
+/* مكان حفظ المنيو المنشور (Supabase Storage) */
+var SB_URL='https://iekotptltmkjmieauhqc.supabase.co';
+var BUCKET='menu-images', DATA_PATH='buffets/menu.json';
+var DATA_URL=SB_URL+'/storage/v1/object/public/'+BUCKET+'/'+DATA_PATH;
 var HEAD_HTML='<head>'+document.head.innerHTML+'</head>';
 var APP_JS=document.getElementById('app-js').textContent;
 
-try{
+if(ADMIN)try{
   var d=JSON.parse(localStorage.getItem(KEY)||'null');
   if(d && d.v===1 && (d.savedAt||0)>(embedded.savedAt||0) && d.menus){S=d;dirty=true;}
 }catch(e){}
@@ -173,7 +179,7 @@ function render(){
   var m=cur(), st=S.settings;
   $('menuSel').innerHTML=S.menus.map(function(x){return '<option value="'+x.id+'"'+(x.id===S.current?' selected':'')+'>'+esc(x.name)+'</option>'}).join('');
   var html='';
-  if(!m.sections.length){html='<p class="hint">لا توجد أقسام في هذا البوفيه. اضغط «تعديل» ثم «+ إضافة قسم».</p>'}
+  if(!m.sections.length){html='<p class="hint">'+(ADMIN?'لا توجد أقسام في هذا البوفيه. اضغط «تعديل» ثم «+ إضافة قسم».':'المنيو قيد التحديث.')+'</p>'}
   m.sections.forEach(function(s,si){
     var ph=S.photos[s.photo];
     html+='<section class="page" style="--p:'+esc(st.primary)+';--d:'+esc(st.dark)+'" aria-label="'+esc(s.title)+'">'+
@@ -195,7 +201,8 @@ function render(){
   $('editBtn').classList.toggle('on',editing);$('editBtn').setAttribute('aria-pressed',editing);$('editBtn').textContent=editing?'تم':'تعديل';
   $('hint').hidden=!editing;
   $('dirty').hidden=!dirty;
-  $('saveBtn').hidden=!dirty||readOnly;
+  $('saveBtn').hidden=!ADMIN||!dirty||readOnly;
+  if(!ADMIN){editing=false;document.body.classList.remove('editing');$('editBtn').hidden=true;$('moreBtn').hidden=true;$('dirty').hidden=true;$('hint').hidden=true}
   fitAll();
 }
 function fitAll(){
@@ -263,6 +270,7 @@ function gcPhotos(){
 
 /* clicks on pages */
 $('pages').addEventListener('click',function(e){
+  if(!ADMIN)return;
   var a=e.target.closest('[data-act]');
   if(a){
     var si=+a.dataset.s,m=cur();
@@ -289,7 +297,7 @@ $('pages').addEventListener('click',function(e){
 });
 
 $('menuSel').onchange=function(){S.current=this.value;render();window.scrollTo(0,0)};
-$('editBtn').onclick=function(){editing=!editing;render()};
+$('editBtn').onclick=function(){if(ADMIN){editing=!editing;render()}};
 /* ===== PDF + WhatsApp ===== */
 var pdfCache=null;
 function rrect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);c.closePath()}
@@ -435,6 +443,7 @@ $('pdfBtn').onclick=openPdfSheet;
 
 /* settings */
 $('moreBtn').onclick=function(){
+  if(!ADMIN)return;
   var st=S.settings,m=cur();
   openSheet('<h3 id="sheetTitle">الإعدادات</h3>'+
     '<label for="fLoc">العنوان</label><input type="text" id="fLoc" value="'+esc(st.location)+'">'+
@@ -445,7 +454,6 @@ $('moreBtn').onclick=function(){
     '<div class="row"><button class="btn primary" id="sOk">حفظ الإعدادات</button><button class="btn" id="sLogo">تغيير الشعار</button></div>'+
     '<div class="group"><label>البوفيه الحالي: '+esc(m.name)+'</label><div class="row">'+
       '<button class="btn" id="sNew">بوفيه جديد</button><button class="btn" id="sDup">نسخ هذا البوفيه</button><button class="btn danger" id="sDelM">حذف هذا البوفيه</button></div></div>'+
-    '<div class="group"><label>نسخة الموقع</label><div class="row"><button class="btn" id="sDl">تنزيل الموقع (HTML)</button></div></div>'+
     '<div class="row"><button class="btn" id="sNo">إغلاق</button></div>','#fLoc');
   $('sNo').onclick=closeSheet;
   $('sOk').onclick=function(){st.location=$('fLoc').value.trim()||st.location;st.phone=BUFFET_PHONE;st.insta=$('fInsta').value.trim()||st.insta;st.primary=$('fP').value;st.dark=$('fD').value;closeSheet();changed();toast('تم حفظ الإعدادات')};
@@ -453,7 +461,6 @@ $('moreBtn').onclick=function(){
   $('sNew').onclick=function(){closeSheet();textSheet('اسم البوفيه الجديد','',function(v){var nm={id:nid('m'),name:v,sections:[]};S.menus.push(nm);S.current=nm.id;editing=true;changed()})};
   $('sDup').onclick=function(){closeSheet();var c=JSON.parse(JSON.stringify(m));c.id=nid('m');c.name=m.name+' (نسخة)';c.sections.forEach(function(s){s.id=nid('s')});S.menus.push(c);S.current=c.id;changed();toast('تم نسخ البوفيه')};
   $('sDelM').onclick=function(){if(S.menus.length<2){toast('لا يمكن حذف آخر بوفيه.');return}closeSheet();setTimeout(function(){confirmSheet('حذف «'+m.name+'» نهائياً؟','حذف البوفيه',function(){S.menus=S.menus.filter(function(x){return x.id!==m.id});S.current=S.menus[0].id;gcPhotos();changed()})},250)};
-  $('sDl').onclick=function(){closeSheet();downloadSite()};
 };
 
 function buildDoc(state){
@@ -479,25 +486,31 @@ function downloadSite(){
 }
 
 $('saveBtn').onclick=function(){
-  if(!artifactNs){
-    try{localStorage.setItem(KEY,JSON.stringify(S));dirty=false;render();toast('تم الحفظ في هذا الجهاز. لنقله إلى GitHub: الإعدادات ← تنزيل الموقع.')}
-    catch(e){toast('المساحة ممتلئة. نزّل نسخة الموقع من الإعدادات.')}
-    return;
-  }
-  var btn=$('saveBtn');btn.disabled=true;btn.textContent='جارٍ الحفظ…';
-  S.savedAt=Date.now();
+  if(!ADMIN||!window.BUFFET_SB)return;
+  var btn=$('saveBtn');btn.disabled=true;btn.textContent='جارٍ النشر…';
+  S.savedAt=Date.now();S.settings.phone=BUFFET_PHONE;
   try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
-  artifactNs.publish(buildDoc(S)).then(function(){
-    dirty=false;btn.disabled=false;btn.textContent='حفظ';render();toast('تم الحفظ');
-  },function(e){
-    btn.disabled=false;btn.textContent='حفظ';
-    var c=e&&e.code;
-    if(c==='not_writer'||c==='not_granted'){readOnly=true;render();toast('هذه نسخة للعرض فقط، ولا يمكن الحفظ منها.')}
-    else if(c==='conflict'){toast('تم تحديث المنيو من مكان آخر، يُعاد تحميله الآن.')}
-    else if(c==='rate_limited'){toast('انتظر قليلاً ثم اضغط «حفظ» مرة أخرى.')}
-    else toast('تعذر الحفظ. تعديلاتك محفوظة في هذا الجهاز، جرّب مرة أخرى.');
-  });
+  var blob=new Blob([JSON.stringify(S)],{type:'application/json'});
+  window.BUFFET_SB.storage.from(BUCKET).upload(DATA_PATH,blob,{upsert:true,contentType:'application/json',cacheControl:'60'}).then(function(r){
+    btn.disabled=false;btn.textContent='حفظ ونشر';
+    if(r.error){toast('تعذر النشر: '+r.error.message);return}
+    dirty=false;render();toast('تم النشر — الزباين يشوفون التعديل الحين');
+  },function(e){btn.disabled=false;btn.textContent='حفظ ونشر';toast('تعذر النشر. تأكد من الإنترنت وجرّب مرة ثانية.')});
 };
+
+/* تحميل آخر نسخة منشورة */
+function loadPublished(){
+  return fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).then(function(d){
+    if(d&&d.v===1&&d.menus&&d.menus.length){
+      if(ADMIN&&dirty&&(S.savedAt||0)>(d.savedAt||0))return;
+      var c=S.current;S=d;S.settings=S.settings||{};S.settings.phone=BUFFET_PHONE;S.photos=S.photos||{};
+      if(S.menus.some(function(m){return m.id===c}))S.current=c;
+      dirty=false;pdfCache=null;render();
+    }
+  }).catch(function(){});
+}
+window.BUFFET_RELOAD=loadPublished;
+loadPublished();
 
 render();
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitAll);
