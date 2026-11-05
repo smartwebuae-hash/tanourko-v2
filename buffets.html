@@ -155,6 +155,9 @@ try{
   var d=JSON.parse(localStorage.getItem(KEY)||'null');
   if(d && d.v===1 && (d.savedAt||0)>(embedded.savedAt||0) && d.menus){S=d;dirty=true;}
 }catch(e){}
+/* رقم بوفيهات تنوركو ثابت: فقط الرقم المنتهي بـ 16 */
+var BUFFET_PHONE='+971 50 088 8916';
+S.settings=S.settings||{};S.settings.phone=BUFFET_PHONE;
 
 var $=function(id){return document.getElementById(id)};
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -445,7 +448,7 @@ $('moreBtn').onclick=function(){
     '<div class="group"><label>نسخة الموقع</label><div class="row"><button class="btn" id="sDl">تنزيل الموقع (HTML)</button></div></div>'+
     '<div class="row"><button class="btn" id="sNo">إغلاق</button></div>','#fLoc');
   $('sNo').onclick=closeSheet;
-  $('sOk').onclick=function(){st.location=$('fLoc').value.trim()||st.location;st.phone=$('fPhone').value.trim()||st.phone;st.insta=$('fInsta').value.trim()||st.insta;st.primary=$('fP').value;st.dark=$('fD').value;closeSheet();changed();toast('تم حفظ الإعدادات')};
+  $('sOk').onclick=function(){st.location=$('fLoc').value.trim()||st.location;st.phone=BUFFET_PHONE;st.insta=$('fInsta').value.trim()||st.insta;st.primary=$('fP').value;st.dark=$('fD').value;closeSheet();changed();toast('تم حفظ الإعدادات')};
   $('sLogo').onclick=function(){closeSheet();pickImage(function(img){st.logo=shrink(img,700,700,'png');changed();toast('تم تغيير الشعار')})};
   $('sNew').onclick=function(){closeSheet();textSheet('اسم البوفيه الجديد','',function(v){var nm={id:nid('m'),name:v,sections:[]};S.menus.push(nm);S.current=nm.id;editing=true;changed()})};
   $('sDup').onclick=function(){closeSheet();var c=JSON.parse(JSON.stringify(m));c.id=nid('m');c.name=m.name+' (نسخة)';c.sections.forEach(function(s){s.id=nid('s')});S.menus.push(c);S.current=c.id;changed();toast('تم نسخ البوفيه')};
