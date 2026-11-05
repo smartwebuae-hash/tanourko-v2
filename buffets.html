@@ -54,6 +54,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 }
 .hint{max-width:900px;margin:12px auto 0;padding:0 12px;font-size:15px;color:var(--muted);line-height:1.6}
 
+/* buffet tabs */
+.mtabs{display:flex;gap:8px;flex:1 1 100%;order:-1}
+.mtabs button{flex:1;min-width:0;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:10px 6px;font:inherit;font-size:16px;font-weight:700;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mtabs button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.bar select#menuSel{display:none}
 /* pages */
 .pages{padding:14px 10px 40px}
 .page{--p:#E8641B;--d:#2B1A10;
@@ -125,12 +130,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 </head>
 <body>
 <div class="bar" role="toolbar" aria-label="أدوات المنيو">
-  <select id="menuSel" aria-label="اختر البوفيه"></select>
+  <div class="mtabs" id="menuTabs" role="tablist" aria-label="اختر البوفيه"></div>
+  <select id="menuSel" aria-label="اختر البوفيه" hidden></select>
   <span class="grow"></span>
   <span class="dirty" id="dirty" hidden></span>
   <button class="btn" id="editBtn" hidden></button>
   <button class="btn primary" id="saveBtn" hidden></button>
-  <button class="btn primary" id="pdfBtn">PDF / واتساب</button>
+  <button class="btn" id="pdfBtn">PDF / واتساب</button>
   <a class="btn" id="callBtn" href="tel:+971500888916" style="text-decoration:none;color:inherit">اتصال للحجز</a>
   <button class="btn" id="moreBtn" hidden></button>
 </div>
@@ -177,6 +183,7 @@ function orn(side){return '<svg class="orn '+side+'" viewBox="0 0 120 120" aria-
 
 function render(){
   var m=cur(), st=S.settings;
+  $('menuTabs').innerHTML=S.menus.map(function(x){var on=x.id===S.current;return '<button type="button" role="tab" aria-selected="'+on+'" class="'+(on?'on':'')+'" data-m="'+x.id+'">'+esc(x.name.replace(/^بوفيه\s+/,''))+'</button>'}).join('');
   $('menuSel').innerHTML=S.menus.map(function(x){return '<option value="'+x.id+'"'+(x.id===S.current?' selected':'')+'>'+esc(x.name)+'</option>'}).join('');
   var html='';
   if(!m.sections.length){html='<p class="hint">'+(ADMIN?'لا توجد أقسام في هذا البوفيه. اضغط «تعديل» ثم «+ إضافة قسم».':'المنيو قيد التحديث.')+'</p>'}
@@ -297,6 +304,7 @@ $('pages').addEventListener('click',function(e){
 });
 
 $('menuSel').onchange=function(){S.current=this.value;render();window.scrollTo(0,0)};
+$('menuTabs').onclick=function(e){var b=e.target.closest('[data-m]');if(!b||b.dataset.m===S.current)return;S.current=b.dataset.m;render();window.scrollTo(0,0)};
 $('editBtn').onclick=function(){if(ADMIN){editing=!editing;render()}};
 /* ===== PDF + WhatsApp ===== */
 var pdfCache=null;
