@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>لوحة تحكم الموقع — تنوركو</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f1ea;--surface:#fff;--ink:#2b1a10;--muted:#7a6a5e;--line:#e5dacd;--brand:#d9691f;--brand-ink:#fff;--danger:#c0392b;--ok:#1e8e3e;--soft:#fbf6ef}
+@media (prefers-color-scheme:dark){:root{--bg:#17110d;--surface:#221912;--ink:#f6ece0;--muted:#b3a291;--line:#3a2b20;--soft:#1c1510}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Tajawal',system-ui,sans-serif;font-size:15px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 14px;cursor:pointer;font-weight:700;white-space:nowrap}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.btn.danger{color:var(--danger)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:default}
+.login{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
+.login form{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px 18px;text-align:center}
+.login h1{font-size:20px;margin:0 0 4px}.login p{margin:0 0 16px;color:var(--muted);font-size:14px}
+.login input{width:100%;font-size:17px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);margin-bottom:12px}
+.login .btn{width:100%;padding:12px;font-size:16px}.err{color:var(--danger);font-size:14px;min-height:20px;margin-top:10px}
+.hd{position:sticky;top:0;z-index:10}
+.top{background:var(--ink);color:var(--bg);display:flex;gap:6px;align-items:center;padding:8px 12px}
+.top b{flex:1;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top a,.top .lnk{color:var(--bg);background:transparent;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:6px 10px;font-size:13px;text-decoration:none;cursor:pointer}
+.dirty{font-size:12px;background:#f0ac3f;color:#2b1a10;border-radius:100px;padding:2px 10px}
+.tabs{display:flex;gap:6px;padding:10px 12px;overflow-x:auto;background:var(--surface);border-bottom:1px solid var(--line)}
+.tab{border:1px solid var(--line);background:var(--bg);border-radius:100px;padding:7px 14px;cursor:pointer;font-weight:700;white-space:nowrap}
+.tab[aria-selected=true]{background:var(--brand);color:#fff;border-color:var(--brand)}
+main{max-width:760px;margin:0 auto;padding:14px 16px 90px}
+.hint{color:var(--muted);font-size:13.5px;margin:0 0 12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+.card.off{opacity:.55}
+.card-h{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.card-h .ttl{flex:1;font-weight:800;min-width:120px;overflow:hidden;text-overflow:ellipsis}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid .full{grid-column:1/-1}
+@media (max-width:520px){.grid{grid-template-columns:1fr}}
+label.f{display:block;font-size:12.5px;color:var(--muted);font-weight:700}
+label.f input,label.f textarea,label.f select{display:block;width:100%;margin-top:3px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--soft);font-size:15px;color:var(--ink)}
+label.f textarea{min-height:64px;resize:vertical}
+input[dir=ltr]{text-align:left}
+.sw{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;cursor:pointer}
+.thumb{width:54px;height:54px;border-radius:50%;object-fit:cover;border:1px solid var(--line);background:var(--soft);flex:0 0 auto}
+.media{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:8px}
+.mi{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#000;aspect-ratio:1/1}
+.mi img,.mi video{width:100%;height:100%;object-fit:cover;display:block}
+.mi .tg{position:absolute;top:4px;inset-inline-start:4px;background:rgba(0,0,0,.65);color:#fff;font-size:11px;border-radius:6px;padding:1px 6px}
+.mi .ctl{position:absolute;bottom:0;inset-inline:0;display:flex;justify-content:space-between;background:rgba(0,0,0,.6)}
+.mi .ctl button{background:transparent;border:0;color:#fff;padding:5px 8px;cursor:pointer;font-size:14px}
+.add{width:100%;border:2px dashed var(--line);background:transparent;border-radius:14px;padding:14px;font-weight:800;cursor:pointer;color:var(--brand)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.prog{font-size:13px;color:var(--muted)}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:12px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;max-width:calc(100% - 32px);text-align:center}
+.toast.on{opacity:1}
+.savebar{position:fixed;bottom:0;inset-inline:0;background:var(--surface);border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:8px;justify-content:center;z-index:9}
+.savebar .btn{min-width:150px}
+</style>
+</head>
+<body>
+<div class="login" id="loginView"><form id="loginForm">
+  <h1>لوحة تحكم الموقع</h1><p>صفحة روابط تنوركو — للمشرف فقط</p>
+  <input id="em" type="hidden" value="admin@tanourko-menu.com" autocomplete="username">
+  <input id="pw" type="password" placeholder="كلمة المرور" required autocomplete="current-password" aria-label="كلمة المرور">
+  <button class="btn primary" id="loginBtn">دخول</button><div class="err" id="loginErr" role="alert"></div>
+</form></div>
+
+<header class="hd"><div class="top"><b>لوحة تحكم الموقع</b><span class="dirty" id="dirty" hidden>غير منشور</span><a href="tanourko-links.html" target="_blank">فتح الموقع</a><button class="lnk" id="logout" type="button">خروج</button></div>
+<nav class="tabs" role="tablist" id="tabs">
+  <button class="tab" role="tab" data-t="celebs" aria-selected="true">⭐ المشاهير</button>
+  <button class="tab" role="tab" data-t="links" aria-selected="false">🔗 الأزرار والروابط</button>
+  <button class="tab" role="tab" data-t="promos" aria-selected="false">📣 الإعلانات</button>
+  <button class="tab" role="tab" data-t="general" aria-selected="false">✏️ النصوص العامة</button>
+</nav></header>
+<main id="main"></main>
+<div class="savebar"><button class="btn primary" id="saveBtn">💾 حفظ ونشر</button><button class="btn" id="revertBtn">تراجع عن التعديلات</button></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="fileIn" hidden>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.79.0/dist/umd/supabase.js"></script>
+<script>
+(function(){
+"use strict";
+var SB_URL='https://iekotptltmkjmieauhqc.supabase.co';
+var SB_KEY='sb_publishable_35u5V1apSr2-DCpjp8ltmg_gIJzhXEN';
+var BUCKET='menu-images', DATA_PATH='site/links.json';
+var DATA_URL=SB_URL+'/storage/v1/object/public/'+BUCKET+'/'+DATA_PATH;
+var DRAFT='tk_site_admin_draft';
+var $=function(id){return document.getElementById(id)};
+var sb=null, S=null, published=null, tab='celebs', dirty=false;
+
+/* المحتوى الحالي للموقع (يُستخدم أول مرة قبل أي حفظ) */
+var DEFAULT={v:1,savedAt:0,
+  settings:{logo:'',tagline_ar:'للمأكولات الشعبية والبحرية — المذاق الشعبي الأصيل',tagline_en:'Popular & Seafood Cuisine — Authentic Local Taste',
+    divider_ar:'— تواصلوا معنا —',divider_en:'— Contact Us —',address:'4 As Siqa 2 St - Al Noud Wadi Al Ain 1 - Abu Dhabi, United Arab Emirates',
+    celebTitle_ar:'⭐ تعاوننا مع المشاهير',celebTitle_en:'⭐ Our Celebrity Collabs',
+    loyalty:{show:true,ar:'بطاقة ولاء: 4 وجبات والخامسة مجانًا 🎁',en:'Loyalty Card: 4 meals & the 5th free 🎁',url:'tanourko-loyalty.html'}},
+  celebs:[{id:'c1',show:true,name_ar:'عائشة الكعبي',name_en:'Aysha Al Kaabi',desc_ar:'',desc_en:'',platform:'snapchat',url:'',avatar:'',media:[]}],
+  promos:[{id:'p1',show:true,img:'hamad.png.jpg',ar:'شاهد إعلان حمد سعيد رغش الشامسي',en:"Watch Hamad Saeed Al Shamsi's Ad",url:'https://www.instagram.com/reel/DdZj_vSqUeL/'}],
+  links:[
+    {id:'l1',k:'menu',show:true,icon:'📋',ar:'قائمة طعام',en:'Menu',url:'menu.html'},
+    {id:'l2',k:'buffets',show:true,icon:'🍽️',ar:'بوفيهات تنوركو',en:'Tanourko Buffets',url:'buffets.html'},
+    {id:'l3',k:'greview',show:true,icon:'svg:greview',ar:'تقييم جوجل مابس',en:'Google Maps Review',url:'https://search.google.com/local/writereview?placeid=ChIJ79DIMwC5ij4RUu2PUr16T4I'},
+    {id:'l4',k:'rate',show:true,icon:'📝',ar:'تقييم الموظفين',en:'Rate Our Staff',url:'rate-staff.html'},
+    {id:'l5',k:'whatsapp',show:true,icon:'svg:whatsapp',ar:'اطلب عبر واتساب',en:'Order via WhatsApp',url:'https://wa.me/message/G4E6Y3D42IJNJ1'},
+    {id:'l6',k:'call',show:true,icon:'☎',ar:'اتصل بنا',en:'Call Us',url:'tel:+971500888917'},
+    {id:'l7',k:'instagram',show:true,icon:'svg:instagram',ar:'تابعونا على إنستغرام',en:'Follow us on Instagram',url:'https://www.instagram.com/tanourko.ae'},
+    {id:'l8',k:'snapchat',show:true,icon:'svg:snapchat',ar:'سناب شات',en:'Snapchat',url:'https://www.snapchat.com/add/tanourko'},
+    {id:'l9',k:'tiktok',show:true,icon:'svg:tiktok',ar:'تيك توك',en:'TikTok',url:'https://www.tiktok.com/@tanourko'},
+    {id:'l10',k:'linktree',show:true,icon:'🔗',ar:'جميع روابطنا',en:'All Our Links',url:'https://linktr.ee/tanourko'},
+    {id:'l11',k:'vcard',show:true,icon:'👤',ar:'حفظ جهة الاتصال',en:'Save Contact',url:''},
+    {id:'l12',k:'map',show:true,icon:'📍',ar:'الموقع — افتح الخريطة',en:'Location — Open Map',url:'https://www.google.com/maps/search/?api=1&query=tanourko&query_place_id=ChIJ79DIMwC5ij4RUu2PUr16T4I'}
+  ]};
+var ICON_OPTS=[['svg:instagram','شعار إنستغرام'],['svg:snapchat','شعار سناب شات'],['svg:tiktok','شعار تيك توك'],['svg:whatsapp','شعار واتساب'],['svg:greview','شعار جوجل']];
+
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
+var tt;function toast(m,ms){var t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},ms||2600)}
+function setDirty(v){dirty=v;$('dirty').hidden=!v;if(v){try{localStorage.setItem(DRAFT,JSON.stringify(S))}catch(e){}}else{try{localStorage.removeItem(DRAFT)}catch(e){}}}
+function normalize(d){
+  var o=clone(DEFAULT);d=d||{};
+  o.savedAt=d.savedAt||0;
+  o.settings=Object.assign(o.settings,d.settings||{});
+  o.settings.loyalty=Object.assign(clone(DEFAULT.settings.loyalty),(d.settings||{}).loyalty||{});
+  ['celebs','promos','links'].forEach(function(k){if(Array.isArray(d[k]))o[k]=d[k]});
+  o.celebs.forEach(function(c){c.media=c.media||[]});
+  return o;
+}
+
+/* ---------- login ---------- */
+if(!window.supabase){$('loginErr').textContent='تعذر تحميل نظام الدخول. تأكد من الإنترنت.';return}
+sb=window.supabase.createClient(SB_URL,SB_KEY);
+async function enter(user){
+  var r=await sb.from('menu_admins').select('email').ilike('email',user.email).maybeSingle();
+  if(r.error||!r.data){await sb.auth.signOut();$('loginErr').textContent='هذا الحساب ما عنده صلاحية المشرف';return}
+  $('loginView').style.display='none';load();
+}
+sb.auth.getSession().then(function(x){if(x.data.session)enter(x.data.session.user)});
+$('loginForm').onsubmit=async function(e){
+  e.preventDefault();$('loginErr').textContent='';$('loginBtn').disabled=true;
+  var r=await sb.auth.signInWithPassword({email:$('em').value,password:$('pw').value});
+  $('loginBtn').disabled=false;
+  if(r.error){$('loginErr').textContent=/Invalid/i.test(r.error.message)?'كلمة المرور غلط':r.error.message;return}
+  enter(r.data.user);
+};
+$('logout').onclick=async function(){await sb.auth.signOut();location.reload()};
+
+/* ---------- load / save ---------- */
+async function load(){
+  var d=null;
+  try{var r=await fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store'});if(r.ok)d=await r.json()}catch(e){}
+  published=normalize(d);S=clone(published);
+  try{var dr=JSON.parse(localStorage.getItem(DRAFT)||'null');
+    if(dr&&dr.v===1&&(dr.savedAt||0)===(published.savedAt||0)&&confirm('عندك تعديلات غير منشورة من قبل. تبي ترجعها؟')){S=normalize(dr);S.savedAt=published.savedAt;setDirty(true)}
+    else setDirty(false);
+  }catch(e){}
+  render();
+}
+$('saveBtn').onclick=async function(){
+  var b=this;b.disabled=true;b.textContent='جارٍ النشر…';
+  try{
+    var out=clone(S);out.v=1;out.savedAt=Date.now();
+    var blob=new Blob([JSON.stringify(out)],{type:'application/json'});
+    var r=await sb.storage.from(BUCKET).upload(DATA_PATH,blob,{upsert:true,contentType:'application/json',cacheControl:'30'});
+    if(r.error)throw r.error;
+    S=out;published=clone(out);setDirty(false);toast('✅ تم النشر — التعديلات صارت على الموقع');
+  }catch(e){toast('❌ ما تم الحفظ: '+(e.message||e),5000)}
+  b.disabled=false;b.textContent='💾 حفظ ونشر';
+};
+$('revertBtn').onclick=function(){if(!dirty)return toast('ما في تعديلات');if(confirm('تلغي كل التعديلات غير المنشورة؟')){S=clone(published);setDirty(false);render()}};
+window.addEventListener('beforeunload',function(e){if(dirty){e.preventDefault();e.returnValue=''}});
+
+/* ---------- uploads ---------- */
+function pickFile(accept,multiple){
+  return new Promise(function(res){
+    var f=$('fileIn');f.value='';f.accept=accept;f.multiple=!!multiple;
+    f.onchange=function(){res(Array.prototype.slice.call(f.files||[]))};f.click();
+  });
+}
+function compressImage(file,max){
+  return new Promise(function(res){
+    if(/gif|svg/.test(file.type))return res(file);
+    var img=new Image(),u=URL.createObjectURL(file);
+    img.onload=function(){
+      var w=img.naturalWidth,h=img.naturalHeight,k=Math.min(1,max/Math.max(w,h));
+      var c=document.createElement('canvas');c.width=Math.round(w*k);c.height=Math.round(h*k);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(u);
+      c.toBlob(function(b){res(b&&b.size<file.size?b:file)},'image/jpeg',0.85);
+    };
+    img.onerror=function(){URL.revokeObjectURL(u);res(file)};img.src=u;
+  });
+}
+async function uploadFile(file,kind){
+  var isVid=/^video\//.test(file.type);
+  if(isVid&&file.size>50*1024*1024)throw new Error('الفيديو أكبر من 50 ميغا. صغّره أو قصّه وجرب مرة ثانية');
+  var blob=isVid?file:await compressImage(file,kind==='avatar'?600:1600);
+  var ext=isVid?((file.name.split('.').pop()||'mp4').toLowerCase().replace(/[^a-z0-9]/g,'')||'mp4'):(blob.type==='image/jpeg'?'jpg':(file.name.split('.').pop()||'jpg').toLowerCase());
+  var path='site/'+kind+'/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.'+ext;
+  var r=await sb.storage.from(BUCKET).upload(path,blob,{contentType:blob.type||file.type,cacheControl:'31536000'});
+  if(r.error)throw r.error;
+  return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+}
+/* ---------- render ---------- */
+Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(t){
+  t.onclick=function(){tab=t.getAttribute('data-t');Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){x.setAttribute('aria-selected',x===t)});render();window.scrollTo(0,0)};
+});
+function fld(label,path,val,opt){
+  opt=opt||{};var full=opt.full?' full':'';var dir=opt.ltr?' dir="ltr"':'';
+  if(opt.area)return '<label class="f'+full+'">'+label+'<textarea data-p="'+path+'"'+dir+'>'+esc(val)+'</textarea></label>';
+  return '<label class="f'+full+'">'+label+'<input data-p="'+path+'" value="'+esc(val)+'"'+dir+(opt.ph?' placeholder="'+esc(opt.ph)+'"':'')+'></label>';
+}
+function headBtns(list,i,label,thumb,show){
+  return '<div class="card-h">'+(thumb!==undefined?'<img class="thumb" alt="" src="'+esc(thumb||'tanourko-stamp.png')+'">':'')+
+    '<span class="ttl">'+esc(label||'بدون اسم')+'</span>'+
+    '<label class="sw"><input type="checkbox" data-p="'+list+'.'+i+'.show"'+(show!==false?' checked':'')+'> ظاهر</label>'+
+    '<button class="btn sm" data-a="up" data-l="'+list+'" data-i="'+i+'" aria-label="فوق">▲</button>'+
+    '<button class="btn sm" data-a="down" data-l="'+list+'" data-i="'+i+'" aria-label="تحت">▼</button>'+
+    '<button class="btn sm danger" data-a="del" data-l="'+list+'" data-i="'+i+'">حذف</button></div>';
+}
+function render(){
+  var h='';
+  if(tab==='celebs'){
+    h+='<p class="hint">أضف المشهور/المشهورة، صورته، رابط حسابه (سناب أو إنستغرام…)، وصور وفيديوهات البوفيه. تظهر في الموقع كبطاقة، ولما الزبون يضغط عليها تفتح الصور والفيديو.</p>';
+    S.celebs.forEach(function(c,i){
+      h+='<div class="card'+(c.show===false?' off':'')+'">'+headBtns('celebs',i,c.name_ar,c.avatar,c.show)+
+        '<div class="grid">'+fld('الاسم (عربي)','celebs.'+i+'.name_ar',c.name_ar)+fld('الاسم (English)','celebs.'+i+'.name_en',c.name_en,{ltr:1})+
+        '<label class="f">المنصة<select data-p="celebs.'+i+'.platform">'+[['snapchat','سناب شات'],['instagram','إنستغرام'],['tiktok','تيك توك'],['other','أخرى']].map(function(o){return '<option value="'+o[0]+'"'+((c.platform||'snapchat')===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></label>'+
+        fld('رابط الحساب','celebs.'+i+'.url',c.url,{ltr:1,ph:'https://www.snapchat.com/add/...'})+
+        fld('وصف قصير (عربي) — اختياري','celebs.'+i+'.desc_ar',c.desc_ar,{area:1})+fld('وصف قصير (English) — اختياري','celebs.'+i+'.desc_en',c.desc_en,{area:1,ltr:1})+
+        '</div><div class="row"><button class="btn sm" data-a="avatar" data-i="'+i+'">🖼️ '+(c.avatar?'تغيير':'إضافة')+' صورة الحساب</button>'+
+        '<button class="btn sm primary" data-a="media" data-i="'+i+'">➕ إضافة صور / فيديو</button><span class="prog" id="prog'+i+'"></span></div>'+
+        '<div class="media">'+(c.media||[]).map(function(m,j){
+          return '<div class="mi">'+(m.t==='video'?'<video src="'+esc(m.u)+'#t=0.5" muted playsinline preload="metadata"></video><span class="tg">🎬 فيديو</span>':'<img alt="" loading="lazy" src="'+esc(m.u)+'">')+
+            '<div class="ctl"><button data-a="mup" data-i="'+i+'" data-j="'+j+'" aria-label="قبل">‹›</button><button data-a="mdel" data-i="'+i+'" data-j="'+j+'" aria-label="حذف">🗑️</button></div></div>';
+        }).join('')+'</div></div>';
+    });
+    h+='<button class="add" data-a="add" data-l="celebs">+ إضافة مشهور جديد</button>';
+  }else if(tab==='links'){
+    h+='<p class="hint">كل أزرار الصفحة. تقدر تعدل الاسم والرابط، تخفي أو تحذف، ترتب بالأسهم، أو تضيف زر جديد. الأيقونة: اكتب إيموجي (مثل 🎉) أو اختر شعار جاهز.</p>';
+    S.links.forEach(function(l,i){
+      var special=l.k==='vcard';
+      h+='<div class="card'+(l.show===false?' off':'')+'">'+headBtns('links',i,(l.icon&&l.icon.indexOf('svg:')!==0?l.icon+' ':'')+l.ar,undefined,l.show)+
+        '<div class="grid">'+fld('الاسم (عربي)','links.'+i+'.ar',l.ar)+fld('الاسم (English)','links.'+i+'.en',l.en,{ltr:1})+
+        (special?'<p class="hint full" style="margin:0">هذا الزر يحفظ رقم المطعم في جوال الزبون — ما يحتاج رابط.</p>':fld('الرابط','links.'+i+'.url',l.url,{ltr:1,full:1,ph:'https://...  أو  tel:+971...'}))+
+        '<label class="f">الأيقونة<select data-icon="'+i+'"><option value="">إيموجي</option>'+ICON_OPTS.map(function(o){return '<option value="'+o[0]+'"'+(l.icon===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></label>'+
+        (l.icon&&l.icon.indexOf('svg:')===0?'':fld('الإيموجي','links.'+i+'.icon',l.icon))+
+        '</div></div>';
+    });
+    h+='<button class="add" data-a="add" data-l="links">+ إضافة زر جديد</button>';
+  }else if(tab==='promos'){
+    h+='<p class="hint">أزرار الإعلانات اللي تظهر فوق (مثل إعلان حمد الشامسي): صورة دائرية + نص + رابط.</p>';
+    S.promos.forEach(function(p,i){
+      h+='<div class="card'+(p.show===false?' off':'')+'">'+headBtns('promos',i,p.ar,p.img,p.show)+
+        '<div class="grid">'+fld('النص (عربي)','promos.'+i+'.ar',p.ar)+fld('النص (English)','promos.'+i+'.en',p.en,{ltr:1})+
+        fld('الرابط','promos.'+i+'.url',p.url,{ltr:1,full:1,ph:'https://...'})+'</div>'+
+        '<div class="row"><button class="btn sm" data-a="pimg" data-i="'+i+'">🖼️ '+(p.img?'تغيير':'إضافة')+' الصورة</button></div></div>';
+    });
+    h+='<button class="add" data-a="add" data-l="promos">+ إضافة إعلان</button>';
+  }else{
+    var s=S.settings;
+    h+='<div class="card"><div class="card-h"><span class="ttl">الشعار</span><img class="thumb" alt="" src="'+esc(s.logo||'tanourko-stamp.png')+'" style="border-radius:12px"><button class="btn sm" data-a="logo">تغيير الشعار</button>'+(s.logo?'<button class="btn sm danger" data-a="logodel">رجوع للشعار الأصلي</button>':'')+'</div>'+
+      '<div class="grid">'+fld('الجملة تحت الشعار (عربي)','settings.tagline_ar',s.tagline_ar,{area:1})+fld('(English)','settings.tagline_en',s.tagline_en,{area:1,ltr:1})+
+      fld('عنوان قسم المشاهير (عربي)','settings.celebTitle_ar',s.celebTitle_ar)+fld('(English)','settings.celebTitle_en',s.celebTitle_en,{ltr:1})+
+      fld('عنوان قسم الأزرار (عربي)','settings.divider_ar',s.divider_ar)+fld('(English)','settings.divider_en',s.divider_en,{ltr:1})+
+      fld('العنوان تحت زر الخريطة','settings.address',s.address,{full:1})+'</div></div>'+
+      '<div class="card"><div class="card-h"><span class="ttl">🎁 شريط بطاقة الولاء</span><label class="sw"><input type="checkbox" data-p="settings.loyalty.show"'+(s.loyalty.show!==false?' checked':'')+'> ظاهر</label></div>'+
+      '<div class="grid">'+fld('النص (عربي)','settings.loyalty.ar',s.loyalty.ar)+fld('(English)','settings.loyalty.en',s.loyalty.en,{ltr:1})+fld('الرابط','settings.loyalty.url',s.loyalty.url,{ltr:1,full:1})+'</div></div>';
+  }
+  $('main').innerHTML=h;
+}
+function getRef(path){var p=path.split('.'),o=S;for(var i=0;i<p.length-1;i++)o=o[p[i]];return [o,p[p.length-1]]}
+$('main').addEventListener('input',function(e){
+  var p=e.target.getAttribute('data-p');if(!p)return;
+  var r=getRef(p);r[0][r[1]]=e.target.type==='checkbox'?e.target.checked:e.target.value;setDirty(true);
+  if(e.target.type==='checkbox'){var c=e.target.closest('.card');if(c&&/\.show$/.test(p)&&p.indexOf('settings')<0)c.classList.toggle('off',!e.target.checked)}
+});
+$('main').addEventListener('change',function(e){
+  var ic=e.target.getAttribute('data-icon');
+  if(ic!==null){var l=S.links[+ic];l.icon=e.target.value||(l.icon&&l.icon.indexOf('svg:')===0?'🔗':l.icon);setDirty(true);render()}
+  else if(e.target.tagName==='SELECT'||e.target.type==='checkbox'){/* handled by input */}
+});
+$('main').addEventListener('click',async function(e){
+  var b=e.target.closest('[data-a]');if(!b)return;
+  var a=b.getAttribute('data-a'),L=b.getAttribute('data-l'),i=+b.getAttribute('data-i'),j=+b.getAttribute('data-j');
+  try{
+    if(a==='up'||a==='down'){var arr=S[L],k=a==='up'?i-1:i+1;if(k<0||k>=arr.length)return;var t=arr[i];arr[i]=arr[k];arr[k]=t;setDirty(true);render()}
+    else if(a==='del'){
+      var it=S[L][i];var nm=it.name_ar||it.ar||'هذا العنصر';
+      if(it.k==='vcard'||it.k==='map'){if(!confirm('هذا زر أساسي. الأفضل تخفيه بدل الحذف. تحذفه؟'))return}
+      else if(!confirm('حذف «'+nm+'»؟'))return;
+      S[L].splice(i,1);setDirty(true);render();
+    }
+    else if(a==='add'){
+      if(L==='celebs')S.celebs.push({id:uid('c'),show:true,name_ar:'',name_en:'',desc_ar:'',desc_en:'',platform:'snapchat',url:'',avatar:'',media:[]});
+      if(L==='links')S.links.push({id:uid('l'),show:true,icon:'🔗',ar:'زر جديد',en:'New link',url:'https://'});
+      if(L==='promos')S.promos.push({id:uid('p'),show:true,img:'',ar:'',en:'',url:'https://'});
+      setDirty(true);render();
+      var cards=document.querySelectorAll('.card');var last=cards[cards.length-1];if(last){last.scrollIntoView({behavior:'smooth',block:'center'});var inp=last.querySelector('input:not([type=checkbox])');if(inp)inp.focus()}
+    }
+    else if(a==='avatar'||a==='pimg'||a==='logo'){
+      var fs=await pickFile('image/*');if(!fs.length)return;toast('جارٍ رفع الصورة…',60000);
+      var url=await uploadFile(fs[0],a==='logo'?'logo':'avatar');
+      if(a==='avatar'){S.celebs[i].avatar=url}
+      else if(a==='pimg'){S.promos[i].img=url}
+      else{S.settings.logo=url}
+      setDirty(true);render();toast('✅ تم رفع الصورة — اضغط «حفظ ونشر»');
+    }
+    else if(a==='logodel'){S.settings.logo='';setDirty(true);render()}
+    else if(a==='media'){
+      var files=await pickFile('image/*,video/*',true);if(!files.length)return;
+      var c=S.celebs[i],done=0,failed=[];
+      for(var n=0;n<files.length;n++){
+        var pr=$('prog'+i);if(pr)pr.textContent='جارٍ الرفع '+(n+1)+' من '+files.length+'…'+(/^video/.test(files[n].type)?' (الفيديو ياخذ وقت)':'');
+        try{var u=await uploadFile(files[n],'celebs');c.media.push({t:/^video\//.test(files[n].type)?'video':'img',u:u});done++;setDirty(true)}
+        catch(err){failed.push(files[n].name+': '+(err.message||err))}
+      }
+      render();
+      if(failed.length)toast('⚠️ تم رفع '+done+'، وفشل: '+failed.join(' | '),7000);
+      else toast('✅ تم رفع '+done+' — اضغط «حفظ ونشر»');
+    }
+    else if(a==='mdel'){if(!confirm('حذف هذا الملف؟'))return;S.celebs[i].media.splice(j,1);setDirty(true);render()}
+    else if(a==='mup'){var md=S.celebs[i].media;if(j<=0)return;var x=md[j];md[j]=md[j-1];md[j-1]=x;setDirty(true);render()}
+  }catch(err){toast('❌ '+(err.message||err),6000);render()}
+});
+})();
+</script>
+</body>
+</html>
