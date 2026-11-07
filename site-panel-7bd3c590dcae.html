@@ -225,12 +225,13 @@ function headBtns(list,i,label,thumb,show){
 function render(){
   var h='';
   if(tab==='celebs'){
-    h+='<p class="hint">أضف المشهور/المشهورة، صورته، رابط حسابه (سناب أو إنستغرام…)، وصور وفيديوهات البوفيه. تظهر في الموقع كبطاقة، ولما الزبون يضغط عليها تفتح الصور والفيديو.</p>';
+    h+='<p class="hint">أضف المشهور/المشهورة، صورته، رابط حسابه (سناب أو إنستغرام…)، وصور وفيديوهات البوفيه. تظهر في الموقع كزر مثل زر حمد الشامسي (دائرة صفراء لسناب)، ولما الزبون يضغط عليها تفتح الصور والفيديو.</p>';
     S.celebs.forEach(function(c,i){
       h+='<div class="card'+(c.show===false?' off':'')+'">'+headBtns('celebs',i,c.name_ar,c.avatar,c.show)+
         '<div class="grid">'+fld('الاسم (عربي)','celebs.'+i+'.name_ar',c.name_ar)+fld('الاسم (English)','celebs.'+i+'.name_en',c.name_en,{ltr:1})+
         '<label class="f">المنصة<select data-p="celebs.'+i+'.platform">'+[['snapchat','سناب شات'],['instagram','إنستغرام'],['tiktok','تيك توك'],['other','أخرى']].map(function(o){return '<option value="'+o[0]+'"'+((c.platform||'snapchat')===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></label>'+
         fld('رابط الحساب','celebs.'+i+'.url',c.url,{ltr:1,ph:'https://www.snapchat.com/add/...'})+
+        fld('نص الزر (عربي) — اختياري','celebs.'+i+'.btn_ar',c.btn_ar,{ph:'شاهد إعلان '+(c.name_ar||'...')})+fld('نص الزر (English) — اختياري','celebs.'+i+'.btn_en',c.btn_en,{ltr:1,ph:'Watch '+(c.name_en||'...')+"'s Ad"})+
         fld('وصف قصير (عربي) — اختياري','celebs.'+i+'.desc_ar',c.desc_ar,{area:1})+fld('وصف قصير (English) — اختياري','celebs.'+i+'.desc_en',c.desc_en,{area:1,ltr:1})+
         '</div><div class="row"><button class="btn sm" data-a="avatar" data-i="'+i+'">🖼️ '+(c.avatar?'تغيير':'إضافة')+' صورة الحساب</button>'+
         '<button class="btn sm primary" data-a="media" data-i="'+i+'">➕ إضافة صور / فيديو</button><span class="prog" id="prog'+i+'"></span></div>'+
@@ -265,7 +266,6 @@ function render(){
     var s=S.settings;
     h+='<div class="card"><div class="card-h"><span class="ttl">الشعار</span><img class="thumb" alt="" src="'+esc(s.logo||'tanourko-stamp.png')+'" style="border-radius:12px"><button class="btn sm" data-a="logo">تغيير الشعار</button>'+(s.logo?'<button class="btn sm danger" data-a="logodel">رجوع للشعار الأصلي</button>':'')+'</div>'+
       '<div class="grid">'+fld('الجملة تحت الشعار (عربي)','settings.tagline_ar',s.tagline_ar,{area:1})+fld('(English)','settings.tagline_en',s.tagline_en,{area:1,ltr:1})+
-      fld('عنوان قسم المشاهير (عربي)','settings.celebTitle_ar',s.celebTitle_ar)+fld('(English)','settings.celebTitle_en',s.celebTitle_en,{ltr:1})+
       fld('عنوان قسم الأزرار (عربي)','settings.divider_ar',s.divider_ar)+fld('(English)','settings.divider_en',s.divider_en,{ltr:1})+
       fld('العنوان تحت زر الخريطة','settings.address',s.address,{full:1})+'</div></div>'+
       '<div class="card"><div class="card-h"><span class="ttl">🎁 شريط بطاقة الولاء</span><label class="sw"><input type="checkbox" data-p="settings.loyalty.show"'+(s.loyalty.show!==false?' checked':'')+'> ظاهر</label></div>'+
