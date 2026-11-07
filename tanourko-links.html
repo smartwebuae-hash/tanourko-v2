@@ -511,8 +511,9 @@
   .celeb.snapchat:active{box-shadow:0 0 26px rgba(255,252,0,0.6)}
   .cm{position:fixed;inset:0;z-index:50;background:rgba(10,5,2,.82);display:flex;align-items:flex-end;justify-content:center}
   .cm[hidden]{display:none}
-  .cm-box{position:relative;background:var(--plaque);color:var(--cream);width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:24px 24px 0 0;padding:22px 16px 28px;text-align:center}
-  .cm-x{position:absolute;top:12px;inset-inline-start:12px;width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:var(--cream);font-size:16px;cursor:pointer}
+  .cm-box{position:relative;background:var(--plaque);color:var(--cream);width:100%;max-width:520px;max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;overflow:hidden;border-radius:24px 24px 0 0;text-align:center}
+  #cmBody{overflow:auto;-webkit-overflow-scrolling:touch;padding:22px 16px calc(28px + env(safe-area-inset-bottom))}
+  .cm-x{position:absolute;z-index:2;top:12px;inset-inline-start:12px;width:40px;height:40px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:var(--cream);font-size:16px;cursor:pointer}
   .cm-head img{width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid var(--gold)}
   .cm-head h3{font-size:19px;margin:8px 0 4px}
   .cm-head p{font-size:14px;opacity:.85;line-height:1.6;margin-bottom:12px}
@@ -526,6 +527,7 @@
   .cm-media video{max-height:70vh}
   .zoom{position:fixed;inset:0;z-index:60;background:#000;display:flex;align-items:center;justify-content:center}
   .zoom img{max-width:100%;max-height:100%}
+  .zoom-x{position:fixed;z-index:61;top:calc(14px + env(safe-area-inset-top));inset-inline-start:14px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.2);color:#fff;font-size:20px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -953,9 +955,14 @@
     h+='</div>';
     $('cmBody').innerHTML=h;
     var follow=$('cmBody').querySelector('.cm-follow svg');if(follow){follow.setAttribute('width','18');follow.setAttribute('height','18')}
-    $('celebModal').hidden=false;document.body.style.overflow='hidden';
+    $('celebModal').hidden=false;document.body.style.overflow='hidden';$('cmBody').scrollTop=0;
+    try{history.pushState({tkCeleb:1},'')}catch(e){}
   }
-  function closeCeleb(){
+  function closeZoom(){var z=document.querySelector('.zoom');if(z){z.remove();return true}return false}
+  /* زر الرجوع في الجوال يسكّر الصورة ثم النافذة */
+  window.addEventListener('popstate',function(){if(closeZoom())return;if(!$('celebModal').hidden)hideCeleb()});
+  function closeCeleb(){if(history.state&&(history.state.tkCeleb||history.state.tkZoom))history.back();else{closeZoom();hideCeleb()}}
+  function hideCeleb(){
     Array.prototype.forEach.call($('cmBody').querySelectorAll('video'),function(v){v.pause()});
     $('celebModal').hidden=true;document.body.style.overflow='';
   }
@@ -964,10 +971,12 @@
     if(e.target===this)return closeCeleb();
     if(e.target.tagName==='IMG'&&e.target.closest('.cm-media')){
       var z=document.createElement('div');z.className='zoom';z.innerHTML='<img alt="" src="'+esc(e.target.src)+'">';
-      z.onclick=function(){z.remove()};document.body.appendChild(z);
+      z.innerHTML+='<button class="zoom-x" type="button" aria-label="close">✕</button>';
+      z.onclick=function(){if(history.state&&history.state.tkZoom)history.back();else z.remove()};document.body.appendChild(z);
+      try{history.pushState({tkZoom:1},'')}catch(err){}
     }
   });
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('celebModal').hidden)closeCeleb()});
+  document.addEventListener('keydown',function(e){if(e.key!=='Escape')return;if(document.querySelector('.zoom')){if(history.state&&history.state.tkZoom)history.back();else closeZoom()}else if(!$('celebModal').hidden)closeCeleb()});
 
   function apply(d){
     if(!d||d.v!==1)return;
