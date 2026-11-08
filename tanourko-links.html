@@ -532,7 +532,12 @@
   .cm-media img{aspect-ratio:1/1;object-fit:cover;cursor:zoom-in}
   .cm-media video{max-height:70vh}
   .zoom{position:fixed;inset:0;z-index:60;background:#000;display:flex;align-items:center;justify-content:center}
-  .zoom img{max-width:100%;max-height:100%}
+  .zoom img{max-width:100%;max-height:100%;user-select:none;-webkit-user-select:none;transition:opacity .15s}
+  .zoom-side{position:fixed;top:0;bottom:0;width:50%;z-index:60;border:0;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .zoom-side.l{left:0}.zoom-side.r{right:0}
+  .zoom-side span{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:26px;line-height:40px;text-align:center;direction:ltr;unicode-bidi:isolate}
+  .zoom-side.l span{left:12px}.zoom-side.r span{right:12px}
+  .zoom-n{position:fixed;z-index:61;bottom:calc(18px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);color:#fff;font-size:14px;font-weight:700;padding:5px 14px;border-radius:100px;direction:ltr}
   .zoom-x{position:fixed;z-index:61;top:calc(14px + env(safe-area-inset-top));inset-inline-start:14px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.2);color:#fff;font-size:20px;cursor:pointer}
 </style>
 </head>
@@ -962,14 +967,14 @@
   }
   var PLAT={snapchat:['تابعها على سناب شات','Follow on Snapchat',''],instagram:['تابعها على إنستغرام','Follow on Instagram','ig'],tiktok:['تابعها على تيك توك','Follow on TikTok','tt'],other:['زيارة الحساب','Visit profile','other']};
   function openCeleb(i){
-    var c=CELEBS[i];if(!c)return;var en=lang()==='en';
+    var c=CELEBS[i];if(!c)return;var en=lang()==='en';IMGS=[];
     var pl=PLAT[c.platform]||PLAT.snapchat;var url=safeUrl(c.url);
     var h='<div class="cm-head">'+(c.avatar?'<img alt="" src="'+esc(c.avatar)+'">':'')+'<h3>'+esc(tx(c,'name'))+'</h3>'+(tx(c,'desc')?'<p>'+esc(tx(c,'desc')).replace(/\n/g,'<br>')+'</p>':'')+
       (url?'<a class="cm-follow '+pl[2]+'" target="_blank" rel="noopener" href="'+esc(url)+'">'+(c.platform==='snapchat'||!c.platform?ICONS.snapchat||'👻':'')+' '+esc(en?pl[1]:pl[0])+'</a>':'')+'</div><div class="cm-media">';
     (c.media||[]).forEach(function(m){
       if(!m||!m.u)return;
       if(m.t==='video')h+='<video class="full" src="'+esc(m.u)+'" controls playsinline preload="metadata"'+(m.poster?' poster="'+esc(m.poster)+'"':'')+'></video>';
-      else h+='<img loading="lazy" alt="" src="'+esc(m.u)+'">';
+      else{h+='<img loading="lazy" alt="" data-k="'+IMGS.length+'" src="'+esc(m.u)+'">';IMGS.push(m.u)}
     });
     h+='</div>';
     $('cmBody').innerHTML=h;
@@ -977,6 +982,7 @@
     $('celebModal').hidden=false;document.body.style.overflow='hidden';$('cmBody').scrollTop=0;
     try{history.pushState({tkCeleb:1},'')}catch(e){}
   }
+  var IMGS=[],ZI=0;
   function closeZoom(){var z=document.querySelector('.zoom');if(z){z.remove();return true}return false}
   /* زر الرجوع في الجوال يسكّر الصورة ثم النافذة */
   window.addEventListener('popstate',function(){if(closeZoom())return;if(!$('celebModal').hidden)hideCeleb()});
@@ -989,11 +995,35 @@
   $('celebModal').addEventListener('click',function(e){
     if(e.target===this)return closeCeleb();
     if(e.target.tagName==='IMG'&&e.target.closest('.cm-media')){
-      var z=document.createElement('div');z.className='zoom';z.innerHTML='<img alt="" src="'+esc(e.target.src)+'">';
-      z.innerHTML+='<button class="zoom-x" type="button" aria-label="close">✕</button>';
-      z.onclick=function(){if(history.state&&history.state.tkZoom)history.back();else z.remove()};document.body.appendChild(z);
+      ZI=+e.target.getAttribute('data-k')||0;
+      var z=document.createElement('div');z.className='zoom';
+      z.innerHTML='<img alt="">'+(IMGS.length>1?'<button class="zoom-side l" type="button" aria-label="left"><span>‹</span></button><button class="zoom-side r" type="button" aria-label="right"><span>›</span></button><div class="zoom-n"></div>':'')+
+        '<button class="zoom-x" type="button" aria-label="close">✕</button>';
+      document.body.appendChild(z);showZoom();
+      z.addEventListener('click',function(ev){
+        var b=ev.target.closest('button');
+        if(b&&b.classList.contains('zoom-side'))return stepZoom(b.classList.contains('l')?leftStep():-leftStep());
+        if(history.state&&history.state.tkZoom)history.back();else z.remove();
+      });
+      var sx=null;
+      z.addEventListener('touchstart',function(ev){sx=ev.touches[0].clientX},{passive:true});
+      z.addEventListener('touchend',function(ev){if(sx===null)return;var dx=ev.changedTouches[0].clientX-sx;sx=null;
+        if(Math.abs(dx)>45&&IMGS.length>1){ev.preventDefault();stepZoom(dx>0?leftStep():-leftStep())}});
       try{history.pushState({tkZoom:1},'')}catch(err){}
     }
+  });
+  /* بالعربي: الجهة اليسار = التالي، اليمين = السابق (والعكس بالإنجليزي) */
+  function leftStep(){return lang()==='en'?-1:1}
+  function stepZoom(d){ZI=(ZI+d+IMGS.length)%IMGS.length;showZoom()}
+  function showZoom(){
+    var z=document.querySelector('.zoom');if(!z)return;
+    var im=z.querySelector('img');im.src=IMGS[ZI];
+    var n=z.querySelector('.zoom-n');if(n)n.textContent=(ZI+1)+' / '+IMGS.length;
+    [1,-1].forEach(function(d){if(IMGS.length>1){var p=new Image();p.src=IMGS[(ZI+d+IMGS.length)%IMGS.length]}});
+  }
+  document.addEventListener('keydown',function(e){
+    if(!document.querySelector('.zoom')||IMGS.length<2)return;
+    if(e.key==='ArrowLeft')stepZoom(leftStep());else if(e.key==='ArrowRight')stepZoom(-leftStep());
   });
   document.addEventListener('keydown',function(e){if(e.key!=='Escape')return;if(document.querySelector('.zoom')){if(history.state&&history.state.tkZoom)history.back();else closeZoom()}else if(!$('celebModal').hidden)closeCeleb()});
 
