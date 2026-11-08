@@ -89,6 +89,7 @@ main{max-width:900px;margin:0 auto;padding:14px 16px 40px}
   <div id="body"><div class="empty">جارٍ التحميل…</div></div>
   <div class="foot">
     <label><input type="checkbox" id="notrack"> لا تحسب زياراتي من هذا الجهاز</label>
+    <button class="btn" id="purge" type="button">🧹 حذف الزيارات الأقدم من سنة</button>
     <span id="updated"></span>
   </div>
 </main>
@@ -103,6 +104,7 @@ var SB_URL='https://iekotptltmkjmieauhqc.supabase.co';
 var SB_KEY='sb_publishable_35u5V1apSr2-DCpjp8ltmg_gIJzhXEN';
 var MAX_ROWS=20000;
 var $=function(id){return document.getElementById(id)};
+var loadedRange=null, mapView=null;
 var sb=null, range='today', rows=[], map=null, layer=null, timer=null, busy=false;
 
 var SQL="create table if not exists public.site_visits (\n  id bigint generated always as identity primary key,\n  created_at timestamptz not null default now(),\n  visitor text, session text, page text, source text, ref text,\n  country text, country_code text, region text, city text,\n  lat double precision, lon double precision,\n  tz text, lang text, device text, os text, browser text, screen text\n);\ncreate index if not exists site_visits_created_idx on public.site_visits (created_at desc);\nalter table public.site_visits enable row level security;\ngrant insert on public.site_visits to anon, authenticated;\ngrant select, delete on public.site_visits to authenticated;\ndrop policy if exists \"log visits\" on public.site_visits;\ncreate policy \"log visits\" on public.site_visits for insert to anon, authenticated\n  with check (char_length(coalesce(page,''))<=120 and char_length(coalesce(ref,''))<=250 and char_length(coalesce(visitor,''))<=40);\ndrop policy if exists \"admins read visits\" on public.site_visits;\ncreate policy \"admins read visits\" on public.site_visits for select to authenticated\n  using (exists (select 1 from public.menu_admins m where lower(m.email)=lower(auth.jwt()->>'email')));\ndrop policy if exists \"admins delete visits\" on public.site_visits;\ncreate policy \"admins delete visits\" on public.site_visits for delete to authenticated\n  using (exists (select 1 from public.menu_admins m where lower(m.email)=lower(auth.jwt()->>'email')));";
@@ -154,6 +156,12 @@ $('refresh').onclick=function(){load()};
 Array.prototype.forEach.call(document.querySelectorAll('.chip'),function(c){
   c.onclick=function(){range=c.getAttribute('data-r');Array.prototype.forEach.call(document.querySelectorAll('.chip'),function(x){x.setAttribute('aria-pressed',x===c)});load()};
 });
+$('purge').onclick=async function(){
+  if(!confirm('تحذف كل الزيارات الأقدم من سنة؟ هذا يوفر مساحة في الباقة المجانية وما يمكن التراجع عنه.'))return;
+  var d=new Date();d.setFullYear(d.getFullYear()-1);
+  var r=await sb.from('site_visits').delete().lt('created_at',d.toISOString());
+  toast(r.error?'❌ '+r.error.message:'✅ تم حذف الزيارات القديمة',4000);
+};
 function syncNotrack(){try{$('notrack').checked=localStorage.getItem('tk_notrack')==='1'}catch(e){}}
 $('notrack').onchange=function(){
   try{if(this.checked)localStorage.setItem('tk_notrack','1');else localStorage.removeItem('tk_notrack')}catch(e){}
@@ -161,11 +169,11 @@ $('notrack').onchange=function(){
 };
 
 /* ---------- data ---------- */
-async function fetchAll(from){
+async function fetchAll(from,after){
   var out=[],step=1000;
   for(var i=0;i<MAX_ROWS;i+=step){
     var r=await sb.from('site_visits').select('created_at,visitor,session,page,source,country,country_code,region,city,lat,lon,device,os,browser')
-      .gte('created_at',from.toISOString()).order('created_at',{ascending:false}).range(i,i+step-1);
+      [after?'gt':'gte']('created_at',after||from.toISOString()).order('created_at',{ascending:false}).range(i,i+step-1);
     if(r.error)throw r.error;
     out=out.concat(r.data||[]);
     if(!r.data||r.data.length<step)break;
@@ -176,7 +184,12 @@ async function load(silent){
   if(busy)return;busy=true;
   if(!silent)$('body').innerHTML='<div class="empty">جارٍ التحميل…</div>';
   try{
-    rows=await fetchAll(since());
+    /* التحديث التلقائي يجيب الزيارات الجديدة بس، عشان ما نستهلك من الباقة المجانية */
+    var from=since();
+    if(silent&&rows.length&&loadedRange===range){
+      var fresh=await fetchAll(from,rows[0].created_at);
+      rows=fresh.concat(rows).filter(function(r){return new Date(r.created_at)>=from}).slice(0,MAX_ROWS);
+    }else{rows=await fetchAll(from);loadedRange=range}
     var live=await sb.from('site_visits').select('visitor').gte('created_at',new Date(Date.now()-5*60000).toISOString()).limit(1000);
     if(live.error)throw live.error;
     render(new Set((live.data||[]).map(function(r){return r.visitor})).size);
@@ -260,6 +273,8 @@ function render(liveCount){
     rows.slice(0,40).map(function(r){
       return '<li><div class="r1"><span>'+placeName(r)+'</span><span class="t">'+esc(ago(r.created_at))+'</span></div><div class="r2">'+esc(pageName(r.page))+' · '+esc(DEVICES[r.device]||r.device||'')+(r.os?' '+esc(r.os):'')+' · '+esc(sourceName(r.source))+'</div></li>';
     }).join('')+'</ul>':'<div class="empty">ما في زيارات في هذي الفترة لين الحين.</div>')+'</div>';
+  if(map){try{mapView=[map.getCenter(),map.getZoom()]}catch(e){}map.remove();map=null}
+  if(loadedRange!==range)mapView=null;
   $('body').innerHTML=h;
   drawMap();
 }
@@ -275,7 +290,8 @@ function drawMap(){
     L.circleMarker(ll,{radius:6+Math.sqrt(o.n/max)*18,color:'#a8451e',weight:2,fillColor:'#d9691f',fillOpacity:.55})
       .bindPopup('<div dir="rtl" style="text-align:right"><b>'+placeName(o.r)+'</b><br>'+num(o.n)+' زيارة · '+num(o.v.size)+' زائر</div>').addTo(map);
   });
-  if(b.length===1)map.setView(b[0],9);else map.fitBounds(b,{padding:[30,30],maxZoom:10});
+  if(mapView)map.setView(mapView[0],mapView[1]);
+  else if(b.length===1)map.setView(b[0],9);else map.fitBounds(b,{padding:[30,30],maxZoom:10});
 }
 })();
 </script>
