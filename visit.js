@@ -93,29 +93,76 @@
       .catch(function () { return null; });
   }
 
-  function send() {
-    geo().then(function (g) {
-      g = g || {};
-      var tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
-      var page = location.pathname.split('/').pop() || 'index.html';
-      var row = {
+  var PAGE = location.pathname.split('/').pop() || 'index.html';
+  /* مصدر الزائر يُحفظ لكل الجلسة، عشان نعرف مثلًا إن اللي ضغط واتساب جا من إنستغرام */
+  var SRC = ss('tk_src');
+  if (!SRC || SRC === 'internal') {
+    SRC = source();
+    /* الصفحات اللي تنفتح في تبويب جديد (مثل المنيو من الموقع الرئيسي) تاخذ مصدر الزائر الأصلي */
+    if (SRC === 'internal') { try { var l = JSON.parse(ls('tk_lsrc') || 'null'); if (l && Date.now() - l.at < 3600e3) SRC = l.s; } catch (e) {} }
+    ss('tk_src', SRC);
+  }
+  if (SRC !== 'internal') ls('tk_lsrc', JSON.stringify({ s: SRC, at: Date.now() }));
+
+  function row(g, page, ref) {
+    g = g || {};
+    var tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+    return {
         visitor: visitor, session: session,
-        page: cut(page, 120), source: source(),
-        ref: cut(document.referrer, 250),
+        page: cut(page, 120), source: SRC,
+        ref: cut(ref, 250),
         country: cut(g.country, 80), country_code: cut(g.cc, 4), region: cut(g.region, 80), city: cut(g.city, 80),
         lat: isFinite(g.lat) ? Math.round(g.lat * 100) / 100 : null,
         lon: isFinite(g.lon) ? Math.round(g.lon * 100) / 100 : null,
         tz: cut(tz, 60), lang: cut(navigator.language, 20),
         device: device(), os: os(), browser: browser(),
         screen: (screen.width || 0) + 'x' + (screen.height || 0)
-      };
+    };
+  }
+  function post(r) {
+    try {
       return fetch(SB_URL + '/rest/v1/site_visits', {
         method: 'POST', keepalive: true,
         headers: { apikey: SB_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify(row)
-      });
-    }).catch(function () {});
+        body: JSON.stringify(r)
+      }).catch(function () {});
+    } catch (e) {}
   }
+  function send() {
+    geo().then(function (g) { post(row(g, PAGE, document.referrer)); });
+  }
+
+  /* الضغطات على الأزرار المهمة (واتساب، اتصال، خريطة…) تنحفظ كسطر page = click:<اسم> */
+  var last = {};
+  function track(name) {
+    name = cut(String(name || '').toLowerCase().replace(/[^a-z0-9_-]/g, ''), 40);
+    if (!name || Date.now() - (last[name] || 0) < 1500) return;
+    last[name] = Date.now();
+    var g = null; try { var c = JSON.parse(ls(GEO_KEY) || 'null'); if (c) g = c.g; } catch (e) {}
+    post(row(g, 'click:' + name, 'from:' + PAGE));
+  }
+  window.tkTrack = track;
+  function kind(a) {
+    var k = a.getAttribute('data-k');
+    if (k === 'vcard') return 'vcard';
+    var h = a.getAttribute('href') || '';
+    if (/^tel:/i.test(h)) return 'call';
+    if (/wa\.me|whatsapp\.com/i.test(h)) return 'whatsapp';
+    if (/writereview/i.test(h)) return 'greview';
+    if (/google\.[a-z.]+\/maps|maps\.google|maps\.app\.goo|goo\.gl\/maps/i.test(h)) return 'map';
+    if (a.classList.contains('hamad-ad-btn')) return 'promo';
+    if (/instagram\.com/i.test(h)) return 'instagram';
+    if (/snapchat\.com/i.test(h)) return 'snapchat';
+    if (/tiktok\.com/i.test(h)) return 'tiktok';
+    if (/linktr\.ee/i.test(h)) return 'linktree';
+    return null;
+  }
+  document.addEventListener('click', function (e) {
+    var el = e.target && e.target.closest ? e.target.closest('a,button.celeb') : null;
+    if (!el) return;
+    if (el.tagName === 'BUTTON') return track('celeb');
+    var k = kind(el); if (k) track(k);
+  }, true);
 
   if (document.readyState === 'complete') setTimeout(send, 300);
   else window.addEventListener('load', function () { setTimeout(send, 300); });

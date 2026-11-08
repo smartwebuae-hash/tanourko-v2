@@ -563,6 +563,7 @@ $('oSend').onclick=()=>{
   if(myLoc){const d=km(myLoc,REST);m+=`\n📍 الموقع: https://maps.google.com/?q=${myLoc.lat.toFixed(6)},${myLoc.lng.toFixed(6)}\n📏 يبعد عن المطعم ${d.toFixed(1)} كم (~${etaMin(d)} دقيقة)`;}
   if(otype==='delivery'&&$('dAddr').value.trim()) m+=`\n🏠 العنوان: ${$('dAddr').value.trim()}`;
   if(note) m+=`\n📝 ملاحظات: ${note}`;
+  try{window.tkTrack&&window.tkTrack('order')}catch(e){}
   window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(m)}`,'_blank');
   lastOrder={n:cart.map(c=>(c.q>1?c.q+'× ':'')+c.n).join('، '),name,type:otype,people:$('dPeople').value};
   cart=[]; saveCart(); $('cNote').value=''; drawFab(false);
