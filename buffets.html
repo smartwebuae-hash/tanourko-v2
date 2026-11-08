@@ -303,8 +303,8 @@ $('pages').addEventListener('click',function(e){
   else if(k==='insta')textSheet('حساب إنستغرام',st.insta,function(v){st.insta=v;changed()});
 });
 
-$('menuSel').onchange=function(){S.current=this.value;render();window.scrollTo(0,0)};
-$('menuTabs').onclick=function(e){var b=e.target.closest('[data-m]');if(!b||b.dataset.m===S.current)return;S.current=b.dataset.m;render();window.scrollTo(0,0)};
+$('menuSel').onchange=function(){S.current=this.value;render();window.scrollTo(0,0);if(!editing&&window.tkTrack)window.tkTrack('buffet',cur().name)};
+$('menuTabs').onclick=function(e){var b=e.target.closest('[data-m]');if(!b||b.dataset.m===S.current)return;S.current=b.dataset.m;render();window.scrollTo(0,0);if(!editing&&window.tkTrack)window.tkTrack('buffet',cur().name)};
 $('editBtn').onclick=function(){if(ADMIN){editing=!editing;render()}};
 /* ===== PDF + WhatsApp ===== */
 var pdfCache=null;
@@ -422,6 +422,7 @@ function saveBlob(blob,name){
 }
 function sendWhatsApp(){
   var m=cur(),f;
+  if(window.tkTrack)window.tkTrack('buffet_send',m.name);
   try{f=new File([pdfCache.blob],'tanourko-buffet.pdf',{type:'application/pdf'})}catch(e){f=null}
   function fallback(){saveBlob(pdfCache.blob,'tanourko-buffet.pdf');setTimeout(function(){window.open('https://wa.me/?text='+encodeURIComponent('منيو '+m.name+' — مرفق ملف PDF'),'_blank')},400);toast('تم تنزيل الملف، أرفقه في محادثة واتساب')}
   if(f&&navigator.canShare&&navigator.canShare({files:[f]})){
@@ -433,7 +434,7 @@ function showPdfReady(){
   openSheet('<h3 id="sheetTitle">الملف جاهز — '+esc(m.name)+'</h3><p class="hint">كل قسم في صفحة مستقلة. حجم الملف '+mb+' ميغابايت.</p>'+
     '<div class="row"><button class="btn primary" id="pWa" style="background:#1FA855;border-color:#1FA855;color:#fff">إرسال عبر واتساب</button></div>'+
     '<div class="row"><button class="btn" id="pDl">تنزيل الملف</button><button class="btn" id="sNo">إغلاق</button></div>','#pWa');
-  $('pWa').onclick=sendWhatsApp;$('pDl').onclick=function(){saveBlob(pdfCache.blob,'tanourko-buffet.pdf')};$('sNo').onclick=closeSheet;
+  $('pWa').onclick=sendWhatsApp;$('pDl').onclick=function(){if(window.tkTrack)window.tkTrack('buffet_send',m.name);saveBlob(pdfCache.blob,'tanourko-buffet.pdf')};$('sNo').onclick=closeSheet;
 }
 function openPdfSheet(){
   var m=cur();

@@ -134,12 +134,14 @@
 
   /* الضغطات على الأزرار المهمة (واتساب، اتصال، خريطة…) تنحفظ كسطر page = click:<اسم> */
   var last = {};
-  function track(name) {
+  /* detail: تفاصيل إضافية مثل اسم الصنف في المنيو أو اسم البوفيه */
+  function track(name, detail) {
     name = cut(String(name || '').toLowerCase().replace(/[^a-z0-9_-]/g, ''), 40);
-    if (!name || Date.now() - (last[name] || 0) < 1500) return;
-    last[name] = Date.now();
+    var key = name + '|' + (detail || '');
+    if (!name || Date.now() - (last[key] || 0) < (detail ? 600 : 1500)) return;
+    last[key] = Date.now();
     var g = null; try { var c = JSON.parse(ls(GEO_KEY) || 'null'); if (c) g = c.g; } catch (e) {}
-    post(row(g, 'click:' + name, 'from:' + PAGE));
+    post(row(g, 'click:' + name, detail ? String(detail) : 'from:' + PAGE));
   }
   window.tkTrack = track;
   function kind(a) {
