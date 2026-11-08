@@ -60,6 +60,10 @@ main{max-width:900px;margin:0 auto;padding:14px 16px 40px}
 .recent .r1{display:flex;gap:8px;justify-content:space-between;font-weight:700;font-size:14px}
 .recent .r2{color:var(--muted);font-size:13px}
 .recent li.ck .r2 b{color:var(--ok)}
+.bars.food .rk{font-weight:800;color:var(--muted);min-width:18px}
+.bars.food .nm small{display:block;color:var(--muted);font-size:12px;white-space:normal}
+.bars.food .nm{white-space:normal}
+.hint2{color:var(--muted);font-size:13px;margin:-4px 0 8px}
 .conv{margin:0 0 12px;font-size:14.5px}.conv b{font-size:20px;color:var(--ok)}
 .card h3{font-size:14px;margin:0 0 8px;color:var(--muted)}
 .recent .t{white-space:nowrap;color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
@@ -115,7 +119,8 @@ var SQL="create table if not exists public.site_visits (\n  id bigint generated 
 
 var PAGES={'tanourko-links.html':'🏠 الموقع الرئيسي','index.html':'🏠 الموقع الرئيسي','menu.html':'📖 المنيو','buffets.html':'🥘 البوفيهات','rate-staff.html':'⭐ تقييم الموظفين','tanourko-loyalty.html':'🎁 بطاقة الولاء','leaderboard.html':'🏆 ترتيب الموظفين'};
 var SOURCES={direct:'🔗 رابط مباشر / QR',internal:'↩️ من صفحة ثانية في الموقع',app:'📱 تطبيق تنوركو',google:'🔎 جوجل',instagram:'📸 إنستغرام',snapchat:'👻 سناب شات',tiktok:'🎵 تيك توك',facebook:'📘 فيسبوك',whatsapp:'💬 واتساب',linktree:'🌳 Linktree',qr:'🔳 QR',other:'أخرى'};
-var CLICKS={whatsapp:'💬 اطلب عبر واتساب',order:'🛒 أرسل طلب من المنيو',call:'☎️ اتصل',map:'📍 فتح الخريطة',vcard:'👤 حفظ رقم المطعم',greview:'⭐ تقييم جوجل',instagram:'📸 إنستغرام',snapchat:'👻 سناب شات',tiktok:'🎵 تيك توك',linktree:'🌳 Linktree',promo:'📣 إعلان',celeb:'🌟 المشاهير'};
+var CLICKS={whatsapp:'💬 اطلب عبر واتساب',order:'🛒 أرسل طلب من المنيو',call:'☎️ اتصل',map:'📍 فتح الخريطة',vcard:'👤 حفظ رقم المطعم',greview:'⭐ تقييم جوجل',instagram:'📸 إنستغرام',snapchat:'👻 سناب شات',tiktok:'🎵 تيك توك',linktree:'🌳 Linktree',promo:'📣 إعلان',celeb:'🌟 المشاهير',add:'➕ أضاف للسلة',ordered:'🧾 صنف في طلب',buffet:'🥘 شاف بوفيه',buffet_send:'📤 أرسل/نزّل منيو بوفيه'};
+var ITEM_EV={add:1,ordered:1,buffet:1,buffet_send:1};
 var CONTACT={whatsapp:1,order:1,call:1};
 function isClick(r){return r.page&&r.page.indexOf('click:')===0}
 function clickName(r){return r.page.slice(6)}
@@ -180,7 +185,7 @@ $('notrack').onchange=function(){
 async function fetchAll(from,after){
   var out=[],step=1000;
   for(var i=0;i<MAX_ROWS;i+=step){
-    var r=await sb.from('site_visits').select('created_at,visitor,session,page,source,country,country_code,region,city,lat,lon,device,os,browser')
+    var r=await sb.from('site_visits').select('created_at,visitor,session,page,source,ref,country,country_code,region,city,lat,lon,device,os,browser')
       [after?'gt':'gte']('created_at',after||from.toISOString()).order('created_at',{ascending:false}).range(i,i+step-1);
     if(r.error)throw r.error;
     out=out.concat(r.data||[]);
@@ -278,7 +283,8 @@ function render(liveCount){
       return '<div class="kpi"><div class="v">'+num(c.n)+'</div><div class="l">'+CLICKS[k]+(c.v.size&&c.v.size!==c.n?' · '+num(c.v.size)+' شخص':'')+'</div></div>'}).join('')+'</div>'+
     '<p class="conv">من كل 100 زائر، <b>'+rate+'</b> تواصلوا معك (واتساب أو طلب أو اتصال) — '+num(contactPeople)+' من '+num(visitors)+' زائر</p>'+
     '<div class="cols"><div><h3>🧭 اللي تواصلوا، من وين جاو؟</h3>'+bars(count(function(r){return CONTACT[clickName(r)]?r.source:null},clicks),function(o){return esc(sourceName(o.k))})+'</div>'+
-    '<div><h3>👆 كل الضغطات</h3>'+bars(count(clickName,clicks),function(o){return esc(CLICKS[o.k]||o.k)},12)+'</div></div></div>';
+    '<div><h3>👆 كل الضغطات</h3>'+bars(count(function(r){var k=clickName(r);return ITEM_EV[k]?null:k},clicks),function(o){return esc(CLICKS[o.k]||o.k)},12)+'</div></div></div>';
+  h+=foodSection();
   if(rows.length>=MAX_ROWS)h+='<p class="empty">يعرض آخر '+num(MAX_ROWS)+' زيارة فقط.</p>';
   h+='<div class="card"><h2>🗺️ أماكن الزوار على الخريطة</h2><div id="map" role="img" aria-label="خريطة أماكن الزوار"></div></div>';
   h+='<div class="card"><h2>📈 '+(range==='today'?'الزيارات حسب الساعة':'الزيارات حسب اليوم')+'</h2>'+days()+'</div>';
@@ -299,6 +305,42 @@ function render(liveCount){
   if(loadedRange!==range)mapView=null;
   $('body').innerHTML=h;
   drawMap();
+}
+/* ---- الأكل الأكثر طلبًا ---- */
+function foodSection(){
+  var it={},bf={};
+  function I(n){return it[n]=it[n]||{n:n,ord:0,orders:0,add:0}}
+  function B(n){return bf[n]=bf[n]||{n:n,view:0,send:0}}
+  clicks.forEach(function(r){
+    var k=clickName(r),d=r.ref||'';
+    if(!d||d.indexOf('from:')===0)return;
+    if(k==='add')I(d).add++;
+    else if(k==='ordered'){var i=d.indexOf('|'),q=parseInt(d.slice(0,i),10)||1;var o=I(d.slice(i+1));o.ord+=q;o.orders++}
+    else if(k==='buffet')B(d).view++;
+    else if(k==='buffet_send')B(d).send++;
+  });
+  var items=Object.keys(it).map(function(k){return it[k]});
+  var top=items.filter(function(o){return o.ord}).sort(function(a,b){return b.ord-a.ord||b.add-a.add});
+  var added=items.slice().sort(function(a,b){return b.add-a.add});
+  var lost=items.filter(function(o){return o.add>=3&&o.orders<o.add/2}).sort(function(a,b){return (b.add-b.orders)-(a.add-a.orders)});
+  var bfs=Object.keys(bf).map(function(k){return bf[k]}).sort(function(a,b){return (b.send*3+b.view)-(a.send*3+a.view)});
+  function list(arr,val,sub,limit){
+    if(!arr.length)return '<div class="empty">ما في بيانات للحين</div>';
+    var mx=val(arr[0])||1;
+    return '<ol class="bars food">'+arr.slice(0,limit||10).map(function(o,i){
+      return '<li><span class="fill" style="width:'+Math.max(3,val(o)/mx*100).toFixed(1)+'%"></span><span class="rk">'+(i+1)+'</span><span class="nm">'+esc(o.n)+(sub?'<small>'+sub(o)+'</small>':'')+'</span><span class="n">'+num(val(o))+'</span></li>';
+    }).join('')+'</ol>';
+  }
+  var h='<div class="card"><h2>🍽️ الأكل الأكثر طلبًا من المنيو</h2>'+
+    '<div class="cols"><div><h3>🧾 الأكثر طلبًا (عدد الحبات في الطلبات المرسلة)</h3>'+
+      list(top,function(o){return o.ord},function(o){return 'في '+num(o.orders)+' طلب · انضاف للسلة '+num(o.add)+' مرة'})+'</div>'+
+    '<div><h3>➕ الأكثر إضافة للسلة</h3>'+list(added,function(o){return o.add})+'</div></div>';
+  if(lost.length)h+='<h3 style="margin-top:14px">🤔 يضيفونه للسلة وما يكملون الطلب</h3><p class="hint2">الرقم = كم مرة انضاف وما انطلب. ممكن السعر أو الصورة أو الوصف يحتاج تعديل.</p>'+
+    list(lost,function(o){return o.add-o.orders},function(o){return 'انضاف '+num(o.add)+' مرة · انطلب في '+num(o.orders)+' طلب فقط'},5);
+  h+='</div>';
+  h+='<div class="card"><h2>🥘 البوفيهات الأكثر اهتمامًا</h2>'+
+    list(bfs,function(o){return o.view+o.send},function(o){return 'فتحوه '+num(o.view)+' · أرسلوا أو نزّلوا المنيو '+num(o.send)})+'</div>';
+  return h;
 }
 function drawMap(){
   if(!window.L){$('map').innerHTML='<div class="empty">تعذر تحميل الخريطة</div>';return}
