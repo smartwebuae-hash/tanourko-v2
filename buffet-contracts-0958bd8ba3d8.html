@@ -186,6 +186,15 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 60px}
 }
 
 /* ===== print: only the paper ===== */
+#printBox{display:none}
+.pacts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.pacts .btn{width:100%;padding:12px;font-size:15px}
+@media print{
+  body.print-imgs>*:not(#printBox){display:none !important}
+  body.print-imgs #printBox{display:block !important}
+  #printBox img{display:block;width:210mm;height:297mm;object-fit:contain;break-after:page;page-break-after:always}
+  #printBox img:last-child{break-after:auto;page-break-after:auto}
+}
 @media print{
   @page{size:A4;margin:0}
   html,body{background:#fff}
@@ -239,6 +248,7 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 60px}
       <button data-f="all">الكل</button>
     </div>
     <input type="month" id="monthF" aria-label="تصفية بالشهر" title="تصفية بالشهر">
+    <button class="btn sm" id="allPdf" type="button">PDF للعقود المعروضة</button>
     <button class="btn sm" id="csvBtn" type="button">تصدير Excel</button>
     <button class="btn sm" id="refreshBtn" type="button">تحديث</button>
   </div>
@@ -250,8 +260,7 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 60px}
   <div class="ebar">
     <button class="btn sm" id="eBack" type="button">→ رجوع</button>
     <div class="t" id="eTitle">عقد جديد<small id="eState"></small></div>
-    <button class="btn sm" id="ePrint" type="button">طباعة / PDF</button>
-    <button class="btn sm" id="eWa" type="button">واتساب</button>
+    <button class="btn sm" id="ePdf" type="button">PDF / طباعة / واتساب</button>
     <button class="btn sm gold" id="eSave" type="button">حفظ</button>
   </div>
   <div class="ewrap">
@@ -299,6 +308,7 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 60px}
 
 <datalist id="dl-cold"></datalist><datalist id="dl-hot"></datalist><datalist id="dl-main"></datalist><datalist id="dl-dessert"></datalist><datalist id="dl-drinks"></datalist>
 <div id="modalRoot"></div>
+<div id="printBox" aria-hidden="true"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.79.0/dist/umd/supabase.js"></script>
@@ -328,6 +338,7 @@ var SUGGEST={
 };
 var STATUS={confirmed:['مؤكد','ok'],pending:['مبدئي','warn'],done:['تم التنفيذ',''],cancelled:['ملغي','bad']};
 
+var SHOWN=[];
 var sb=null, DB={v:1,seq:0,items:[]}, cur=null, curDirty=false, filter='up';
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -444,6 +455,7 @@ function renderList(){
     return matches(c,q);
   });
   items.sort(function(a,b){var r=sortKey(a)<sortKey(b)?-1:sortKey(a)>sortKey(b)?1:0;return filter==='past'?-r:r});
+  SHOWN=items;
   if(!items.length){$('list').innerHTML='<div class="empty" style="grid-column:1/-1">لا توجد عقود هنا.<br><br><button class="btn gold" data-new>+ إضافة عقد جديد</button></div>';return}
   $('list').innerHTML=items.map(function(c){
     var d=pdate(c.date),st=STATUS[c.status]||STATUS.confirmed,rem=remainOf(c),days=d?Math.round((d-pdate(t))/864e5):null;
@@ -455,7 +467,7 @@ function renderList(){
         (c.time?'<span>🕖 '+esc(c.time)+'</span>':'')+(c.location?'<span>📍 '+esc(c.location)+'</span>':'')+(c.count?'<span>👥 '+esc(c.count)+'</span>':'')+(c.phone?'<span dir="ltr">📞 '+esc(c.phone)+'</span>':'')+
       '</div></div></div>'+
       '<div class="money"><span class="pill '+st[1]+'">'+st[0]+'</span>'+(num(c.total)?'<span class="pill">المبلغ '+fmt(num(c.total))+'</span>':'')+(num(c.paid)?'<span class="pill ok">واصل '+fmt(num(c.paid))+'</span>':'')+(num(c.total)?'<span class="pill '+(rem>0?'warn':'ok')+'">'+(rem>0?'باقي '+fmt(rem):'مدفوع بالكامل')+'</span>':'')+'<span class="pill">'+nItems+' صنف</span></div>'+
-      '<div class="acts"><button class="btn sm primary" data-open="'+c.id+'">فتح / تعديل</button><button class="btn sm" data-print="'+c.id+'">طباعة</button><button class="btn sm" data-dup="'+c.id+'" title="عقد جديد بنفس الأصناف">نسخ</button><button class="btn sm danger" data-del="'+c.id+'">حذف</button></div>'+
+      '<div class="acts"><button class="btn sm primary" data-open="'+c.id+'">فتح / تعديل</button><button class="btn sm" data-print="'+c.id+'">PDF / طباعة</button><button class="btn sm" data-dup="'+c.id+'" title="عقد جديد بنفس الأصناف">نسخ</button><button class="btn sm danger" data-del="'+c.id+'">حذف</button></div>'+
     '</div>';
   }).join('');
 }
@@ -559,10 +571,8 @@ $('eSave').onclick=async function(){
 };
 $('eBack').onclick=function(){if(tryClose())try{history.back()}catch(e){}};
 window.addEventListener('popstate',function(){if(cur&&!tryClose())try{history.pushState({ed:1},'')}catch(e){}});
-$('ePrint').onclick=function(){document.activeElement&&document.activeElement.blur();setTimeout(function(){window.print()},50)};
+$('ePdf').onclick=function(){if(!cur)return;document.activeElement&&document.activeElement.blur();openPdf([cleanCur()])};
 $('eDel').onclick=function(){if(cur)delContract(cur.id,true)};
-$('eWa').onclick=function(){if(!cur)return;var c=cleanCur();var p=waNumber(c.phone);
-  window.open('https://wa.me/'+(p||'')+'?text='+encodeURIComponent(waText(c)),'_blank','noopener')};
 
 function waNumber(p){p=String(p||'').replace(/[^\d]/g,'');if(!p)return '';if(p.indexOf('00')===0)p=p.slice(2);if(p.indexOf('971')===0)return p;if(p[0]==='0')p=p.slice(1);return '971'+p}
 function waText(c){
@@ -577,6 +587,206 @@ function waText(c){
   if(num(c.total)){L.push('','💰 المبلغ: '+fmt(num(c.total))+' درهم');if(num(c.paid))L.push('✅ الواصل: '+fmt(num(c.paid))+' درهم');if(remainOf(c)>0)L.push('⏳ المتبقي: '+fmt(remainOf(c))+' درهم')}
   L.push('','📞 +971 50 088 8917 | @tanourko','العين - خلف البوادي مول');
   return L.join('\n');
+}
+
+
+/* ============ PDF: كل عقد في صفحة A4 وحدة (رسم مباشر على canvas) ============ */
+var IMG={};
+function loadImg(src){
+  if(IMG[src])return IMG[src];
+  IMG[src]=new Promise(function(res){var i=new Image();i.onload=function(){res(i)};i.onerror=function(){res(null)};i.src=src});
+  return IMG[src];
+}
+async function pdfAssets(){
+  try{await Promise.all([document.fonts.load('700 20px Tajawal'),document.fonts.load('900 20px Tajawal'),document.fonts.load('500 20px Tajawal'),document.fonts.load('800 20px Tajawal')])}catch(e){}
+  var r=await Promise.all([loadImg('contract-logo.webp'),loadImg('contract-stamp.webp'),loadImg('contract-sign.webp')]);
+  return {logo:r[0],stamp:r[1],sign:r[2]};
+}
+function drawContract(cv,c,A){
+  var W=794,H=1123,K=2,FAM='Tajawal, "Segoe UI", Tahoma, sans-serif',PEN='#1f3b9c',RED='#c0161d';
+  cv.width=W*K;cv.height=H*K;
+  var x=cv.getContext('2d');
+  function F(w,s,fam){x.font=w+' '+s+'px '+(fam||FAM)}
+  function T(t,px,py,al,col,dir){x.direction=dir||'rtl';x.textAlign=al;x.fillStyle=col||'#111';x.fillText(t,px,py)}
+  function fit(t,w,s,wt,fam){var z=s;F(wt,z,fam);while(z>9&&x.measureText(t).width>w){z-=.5;F(wt,z,fam)}return z}
+  function dots(a,b,y){x.save();x.strokeStyle='#8a8a8a';x.lineWidth=1.2;x.setLineDash([1.3,2.7]);x.beginPath();x.moveTo(a,y);x.lineTo(b,y);x.stroke();x.restore()}
+  function wrap(t,w){
+    var out=[];String(t||'').split('\n').forEach(function(par){
+      var words=par.split(/\s+/).filter(Boolean),line='';
+      if(!words.length){out.push('');return}
+      words.forEach(function(wd){var tr=line?line+' '+wd:wd;if(x.measureText(tr).width>w&&line){out.push(line);line=wd}else line=tr});
+      out.push(line);
+    });
+    while(out.length&&!out[out.length-1])out.pop();
+    return out;
+  }
+  function paint(f){
+    x.setTransform(K,0,0,K,0,0);x.fillStyle='#fff';x.fillRect(0,0,W,H);x.textBaseline='alphabetic';
+    if(A.logo){x.globalAlpha=.075;var ww=418;x.drawImage(A.logo,(W-ww)/2,H*.325,ww,ww*A.logo.height/A.logo.width);x.globalAlpha=1}
+    /* الشعار */
+    if(A.logo){var lh=166,lw=lh*A.logo.width/A.logo.height;x.drawImage(A.logo,(W-lw)/2,26,lw,lh)}
+    /* No: */
+    F('700',18,'Georgia, "Times New Roman", serif');T('No:',54,112,'left',RED,'ltr');
+    var nt=c.noText||(num(c.total)?String(c.total):'');
+    fit(nt,140,22,'700');T(nt,96,110,'left',PEN,'ltr');dots(92,236,118);
+    var t=num(c.total),p=num(c.paid),r=t-p;F('700',16);
+    if(p)T('واصل '+fmt(p),236,142,'right',PEN);
+    if(t&&p&&r>0)T('باقي '+fmt(r),236,164,'right',PEN);
+    /* العنوان */
+    var title='عقد تنظيم حفلة (بوفيه)';F('900',23);var tw=x.measureText(title).width+44;
+    x.fillStyle='#f7a23b';x.fillRect((W-tw)/2,202,tw,36);x.fillStyle='#222';x.fillRect((W-tw)/2,236,tw,2.5);
+    T(title,W/2,228,'center','#111');
+    /* الحقول */
+    var R=W-54,LB=128,vx1=54,vx2=R-LB-6,vc=(vx1+vx2)/2,y=262*1,rh=Math.max(26,36*f);
+    var rows=[['تاريخ الحفلة :',c.date?wday(c.date)+'     '+dmy(c.date):''],['التوقيت :',c.time],['الإسم :',c.name],['رقم الهاتف :',c.phone],['الموقع :',c.location],['العدد :',c.count]];
+    rows.forEach(function(rw){
+      y+=rh;F('800',17);T(rw[0],R,y,'right','#111');
+      var v=rw[1]||'';if(v){var s=fit(v,vx2-vx1-10,17,'700');T(v,vc,y-2,'center',PEN,rw[0]==='رقم الهاتف :'?'ltr':'rtl')}
+      dots(vx1,vx2,y+6);
+    });
+    /* طلبات خاصة */
+    y+=rh;F('800',17);T('طلبات خاصة :',R,y,'right','#111');
+    F('700',Math.max(12,16*f));var lines=wrap(c.requests,vx2-vx1-8),nL=Math.max(Math.round(3*f+.4),lines.length),lh2=Math.max(22,31*f);
+    for(var i=0;i<nL;i++){var ly=y+i*lh2;if(lines[i])T(lines[i],vx2-2,ly-2,'right',PEN);dots(i?54:vx1,i?vx2+LB:vx2,ly+6)}
+    y+=(nL-1)*lh2+6;
+    /* الأقسام */
+    function head(s,yy){
+      F('900',16.5);var wa=x.measureText(s.ar).width;F('700',14,'Georgia, "Times New Roman", serif');var we=x.measureText(s.en).width;
+      var g=12,tot=wa+we+g*2+4,sx=(W-tot)/2;
+      x.fillStyle=RED;T(s.en,sx,yy,'left',RED,'ltr');x.fillRect(sx,yy+4,we,1.5);
+      F('700',16);T('|',sx+we+g,yy,'left','#333','ltr');
+      F('900',16.5);T(s.ar,sx+tot,yy,'right',RED);x.fillStyle=RED;x.fillRect(sx+tot-wa,yy+4,wa,1.5);
+    }
+    var ir=Math.max(21,29*f),isz=Math.max(11.5,16*f);
+    SECTIONS.forEach(function(s){
+      if(s.k==='drinks')return;
+      var list=(c.sections[s.k]||[]);
+      y+=Math.max(26,34*f);head(s,y);y+=Math.max(4,6*f);
+      var cw=(W-108-2*40)/3,nr=Math.max(2,Math.ceil(list.length/3));
+      for(var rr=0;rr<nr;rr++){
+        var by=y+(rr+1)*ir;
+        for(var ci=0;ci<3;ci++){
+          var cx=R-cw/2-ci*(cw+40),it=list[rr*3+ci]||'';
+          if(it){fit(it,cw-6,isz,'700');T(it,cx,by-5,'center',PEN)}
+          dots(cx-cw/2,cx+cw/2,by);
+        }
+      }
+      y+=nr*ir;
+    });
+    /* المشروبات + التوقيع + الختم */
+    var dk=SECTIONS[SECTIONS.length-1],dl=(c.sections.drinks||[]),top=y;
+    y+=Math.max(28,36*f);head(dk,y);y+=Math.max(4,6*f);
+    var dw=330,dn=Math.max(3,dl.length);
+    for(var di=0;di<dn;di++){var dy=y+(di+1)*ir;if(dl[di]){fit(dl[di],dw-6,isz,'700');T(dl[di],W/2,dy-5,'center',PEN)}dots(W/2-dw/2,W/2+dw/2,dy)}
+    y+=dn*ir;
+    var mid=(top+y)/2+8;
+    F('900',17);T(c.signer||'',R-8,mid-14,'right','#2b2f8f');
+    if(A.sign){var sw=190;x.drawImage(A.sign,R-sw,mid-4,sw,sw*A.sign.height/A.sign.width)}
+    if(A.stamp){var ss=Math.min(170,Math.max(120,y-top));x.drawImage(A.stamp,54,mid-ss/2,ss,ss*A.stamp.height/A.stamp.width)}
+    var end=Math.max(y,mid+85);
+    /* الفوتر */
+    x.fillStyle='#c98a3a';x.fillRect(54,H-84,W-108,2.4);
+    F('900',24);T('+971 50 088 8917   |   @tanourko',W/2,H-50,'center','#3a2a1c','ltr');
+    F('500',13);T('Al Ain - Behind Bawadi Mall',W/2-30,H-24,'right','#555','ltr');T('العين - خلف البوادي مول',W/2+30,H-24,'left','#555','rtl');
+    x.fillStyle='#d08a2a';x.beginPath();x.arc(W/2-30-x.measureText('Al Ain - Behind Bawadi Mall').width-10,H-28.5,4,0,7);x.fill();
+    F('500',13);x.beginPath();x.arc(W/2+30+x.measureText('العين - خلف البوادي مول').width+10,H-28.5,4,0,7);x.fill();
+    return end;
+  }
+  var fs=[1,.94,.88,.82,.76,.7,.64,.58,.52];
+  for(var k=0;k<fs.length;k++){if(paint(fs[k])<=H-100)return cv}
+  return cv;
+}
+function makePdf(pages){
+  var enc=new TextEncoder(),parts=[],off=0,xr=[];
+  function w(s){var b=typeof s==='string'?enc.encode(s):s;parts.push(b);off+=b.length}
+  var PW=595.28,PH=841.89,n=pages.length;
+  w('%PDF-1.4\n');w(new Uint8Array([0x25,0xE2,0xE3,0xCF,0xD3,0x0A]));
+  xr[1]=off;w('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+  var kids=[];for(var i=0;i<n;i++)kids.push((3+3*i)+' 0 R');
+  xr[2]=off;w('2 0 obj\n<< /Type /Pages /Kids ['+kids.join(' ')+'] /Count '+n+' >>\nendobj\n');
+  for(var j=0;j<n;j++){
+    var pid=3+3*j,cid=4+3*j,iid=5+3*j,pg=pages[j],content='q '+PW+' 0 0 '+PH+' 0 0 cm /Im0 Do Q';
+    xr[pid]=off;w(pid+' 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+PW+' '+PH+'] /Resources << /XObject << /Im0 '+iid+' 0 R >> >> /Contents '+cid+' 0 R >>\nendobj\n');
+    xr[cid]=off;w(cid+' 0 obj\n<< /Length '+content.length+' >>\nstream\n'+content+'\nendstream\nendobj\n');
+    xr[iid]=off;w(iid+' 0 obj\n<< /Type /XObject /Subtype /Image /Width '+pg.w+' /Height '+pg.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+pg.bytes.length+' >>\nstream\n');w(pg.bytes);w('\nendstream\nendobj\n');
+  }
+  var xo=off,total=3+3*n,xt='xref\n0 '+total+'\n0000000000 65535 f \n';
+  for(var k=1;k<total;k++)xt+=('0000000000'+xr[k]).slice(-10)+' 00000 n \n';
+  w(xt+'trailer\n<< /Size '+total+' /Root 1 0 R >>\nstartxref\n'+xo+'\n%%EOF');
+  return new Blob(parts,{type:'application/pdf'});
+}
+async function buildPdf(list){
+  var A=await pdfAssets(),pages=[],urls=[];
+  for(var i=0;i<list.length;i++){
+    var cv=drawContract(document.createElement('canvas'),list[i],A);
+    var blob=await new Promise(function(r){cv.toBlob(r,'image/jpeg',.9)});
+    if(!blob)throw new Error('canvas');
+    pages.push({bytes:new Uint8Array(await blob.arrayBuffer()),w:cv.width,h:cv.height});
+    urls.push(URL.createObjectURL(blob));
+    await new Promise(function(r){setTimeout(r,10)});
+  }
+  return {pdf:makePdf(pages),imgs:urls};
+}
+function pdfName(list){
+  if(list.length>1)return 'عقود-تنوركو-'+today()+'.pdf';
+  var c=list[0];return ('عقد-'+(c.name||'تنوركو')+(c.date?'-'+dmy(c.date).replace(/\//g,'-'):'')).replace(/[\\/:*?"<>|]+/g,'').replace(/\s+/g,'-')+'.pdf';
+}
+function saveBlob(blob,name){
+  try{var u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},15000);toast('تم تنزيل الملف')}catch(e){toast('التنزيل غير متاح هنا')}
+}
+function shareFile(blob,name,text){
+  var f;try{f=new File([blob],name,{type:'application/pdf'})}catch(e){f=null}
+  if(f&&navigator.canShare&&navigator.canShare({files:[f]})){
+    return navigator.share({files:[f],title:name,text:text||''}).then(function(){return true},function(e){return e&&e.name==='AbortError'?true:false});
+  }
+  return Promise.resolve(false);
+}
+var isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function printImages(urls){
+  var box=$('printBox');box.innerHTML=urls.map(function(u){return '<img src="'+u+'" alt="">'}).join('');
+  var imgs=[].slice.call(box.querySelectorAll('img'));
+  Promise.all(imgs.map(function(i){return i.complete?1:new Promise(function(r){i.onload=i.onerror=r})})).then(function(){
+    document.body.classList.add('print-imgs');
+    setTimeout(function(){
+      try{window.print()}catch(e){toast('الطباعة غير متاحة هنا — نزّل الملف واطبعه')}
+      setTimeout(function(){document.body.classList.remove('print-imgs')},1500);
+    },60);
+  });
+}
+var pdfJob=null;
+function openPdf(list,phone){
+  list=list.filter(Boolean);if(!list.length){toast('ما في عقود');return}
+  var stop=false;
+  modal('<h2>تجهيز ملف PDF</h2><p class="muted" id="pMsg" role="status">جارٍ تجهيز '+(list.length>1?list.length+' عقود — كل عقد في صفحة…':'العقد…')+'</p><div class="acts"><button class="btn" id="mNo">إلغاء</button></div>');
+  $('mNo').onclick=function(){stop=true;closeModal()};
+  buildPdf(list).then(function(res){
+    if(stop)return;pdfJob=res;
+    var name=pdfName(list),mb=(res.pdf.size/1048576).toFixed(1),one=list.length===1?list[0]:null;
+    modal('<h2>الملف جاهز ✓</h2><p class="muted">'+(list.length>1?list.length+' عقود، كل عقد في صفحة A4.':'العقد في صفحة A4 وحدة.')+' الحجم '+mb+' ميغا.</p>'+
+      '<div class="pacts">'+
+      '<button class="btn" id="pWa" style="background:#1FA855;border-color:#1FA855;color:#fff">إرسال PDF على واتساب</button>'+
+      '<button class="btn primary" id="pPrint">طباعة</button>'+
+      '<button class="btn" id="pDl">تنزيل الملف</button>'+
+      (one?'<button class="btn" id="pTxt">إرسال التفاصيل كنص على واتساب</button>':'')+
+      '<button class="btn" id="mNo">إغلاق</button></div>'+
+      '<p class="muted" style="font-size:12px;margin-top:10px">عند الإرسال تفتح لك قائمة المشاركة: اختر واتساب ثم الزبون.</p>');
+    $('mNo').onclick=closeModal;
+    $('pDl').onclick=function(){saveBlob(res.pdf,name)};
+    $('pWa').onclick=function(){
+      shareFile(res.pdf,name,one?'عقد حفلة '+(one.name||'')+' — تنوركو':'عقود تنوركو').then(function(ok){
+        if(ok)return;
+        saveBlob(res.pdf,name);
+        var num=one?waNumber(one.phone):'';
+        setTimeout(function(){window.open('https://wa.me/'+num+'?text='+encodeURIComponent('مرفق عقد الحفلة PDF — تنوركو'),'_blank','noopener')},500);
+        toast('تم تنزيل الملف — أرفقه في محادثة واتساب');
+      });
+    };
+    $('pPrint').onclick=function(){
+      if(isIOS&&navigator.canShare){shareFile(res.pdf,name).then(function(ok){if(!ok)printImages(res.imgs)});toast('اختر «طباعة» من القائمة');return}
+      closeModal();printImages(res.imgs);
+    };
+    if(one&&$('pTxt'))$('pTxt').onclick=function(){window.open('https://wa.me/'+waNumber(one.phone)+'?text='+encodeURIComponent(waText(one)),'_blank','noopener')};
+  },function(e){if(!stop){closeModal();toast('تعذر تجهيز الملف، جرّب مرة ثانية')}});
 }
 
 /* ============ حذف / نسخ ============ */
@@ -596,7 +806,7 @@ $('list').onclick=function(e){
   var b=e.target.closest('button');if(!b)return;
   var find=function(id){return DB.items.find(function(x){return x.id===id})};
   if(b.dataset.open)openEditor(find(b.dataset.open),false);
-  if(b.dataset.print){openEditor(find(b.dataset.print),false);setTimeout(function(){window.print()},300)}
+  if(b.dataset.print)openPdf([find(b.dataset.print)]);
   if(b.dataset.del)delContract(b.dataset.del,false);
   if(b.dataset.dup){var o=clone(find(b.dataset.dup)),n=blank();n.sections=o.sections;n.requests=o.requests;n.count=o.count;n.signer=o.signer;openEditor(n,true);toast('نسخة جديدة بنفس الأصناف — عدّل البيانات واحفظ')}
   if(b.hasAttribute('data-new'))$('newBtn').click();
@@ -609,6 +819,7 @@ $('q').oninput=renderList;
 $('monthF').onchange=renderList;
 $('refreshBtn').onclick=async function(){try{await load();renderList();toast('تم التحديث')}catch(e){setSync(false);toast('تعذر الاتصال')}};
 $('logoutBtn').onclick=async function(){await sb.auth.signOut();location.reload()};
+$('allPdf').onclick=function(){if(!SHOWN.length){toast('ما في عقود معروضة');return}openPdf(SHOWN.slice())};
 $('csvBtn').onclick=function(){
   var rows=[['رقم','التاريخ','اليوم','التوقيت','الإسم','الهاتف','الموقع','العدد','المبلغ','الواصل','المتبقي','الحالة','طلبات خاصة'].concat(SECTIONS.map(function(s){return s.ar}))];
   live().slice().sort(function(a,b){return sortKey(a)<sortKey(b)?-1:1}).forEach(function(c){
