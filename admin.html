@@ -36,6 +36,20 @@ h2{font-size:16px;font-weight:800}.sub{font-size:12.5px;color:var(--muted);margi
 .login input{width:100%;font:inherit;font-size:17px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);margin-bottom:12px}
 .login .btn{width:100%;padding:12px;font-size:16px}
 .err{color:var(--danger);font-size:14px;min-height:20px;margin-top:10px}
+.vault .list{padding:0}
+.v{padding:12px 14px}.v+.v{border-top:1px solid var(--line)}
+.v-h{display:flex;align-items:center;gap:8px}.v-h b{flex:1;font-size:16px}
+.v-r{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:14px;color:var(--muted)}
+.v-r span.k{width:70px;flex:0 0 auto}.v-r code{flex:1;font-family:ui-monospace,Menlo,monospace;color:var(--ink);font-size:15px;direction:ltr;text-align:left;overflow-wrap:anywhere}
+.mini{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:4px 9px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.v-note{margin-top:6px;font-size:13px;color:var(--muted);white-space:pre-wrap}
+.empty{padding:16px;text-align:center;color:var(--muted);font-size:14px}
+.ed{padding:14px;display:grid;gap:8px}
+.ed label{font-size:12.5px;font-weight:700;color:var(--muted)}
+.ed input,.ed textarea{width:100%;margin-top:3px;font:inherit;font-size:15px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink)}
+.ed .ltr{direction:ltr;text-align:left}
+.setup{padding:14px;font-size:13.5px;line-height:1.7}
+.setup pre{direction:ltr;text-align:left;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:11.5px;overflow:auto;margin:8px 0;white-space:pre}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:12px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none}.toast.on{opacity:1}
 </style></head><body>
 <div class="login" id="loginView"><form id="loginForm">
@@ -47,6 +61,9 @@ h2{font-size:16px;font-weight:800}.sub{font-size:12.5px;color:var(--muted);margi
 <div class="wrap">
 <header><h1>لوحات تنوركو</h1><button class="btn" id="logout" type="button">خروج</button></header>
 <div class="status" id="status"></div>
+<section class="vault"><h2>🔑 كلمات المرور</h2><p class="sub">محفوظة في حسابك على Supabase — ما يشوفها إلا المشرف بعد الدخول</p>
+<div class="list" id="vault"><div class="empty">جارٍ التحميل…</div></div>
+<div class="row" style="margin-top:10px"><button class="btn primary" id="vAdd" type="button">+ إضافة كلمة مرور</button></div></section>
 <section><h2>🔐 لوحات التحكم</h2><p class="sub">تدخل مرة وحدة هنا، وتفتح بدون كلمة مرور</p><div class="list"><div class="it"><a class="go" href="site-panel-7bd3c590dcae.html" target="_blank" rel="noopener"><span class="e">⚙️</span><span class="n">لوحة تحكم الموقع</span><span class="ar">‹</span></a><button class="cp" data-u="site-panel-7bd3c590dcae.html" aria-label="نسخ رابط لوحة تحكم الموقع">نسخ</button></div><div class="it"><a class="go" href="menu-admin.html" target="_blank" rel="noopener"><span class="e">📋</span><span class="n">لوحة تحكم المنيو</span><span class="ar">‹</span></a><button class="cp" data-u="menu-admin.html" aria-label="نسخ رابط لوحة تحكم المنيو">نسخ</button></div><div class="it"><a class="go" href="buffet-panel-8051368664ed.html" target="_blank" rel="noopener"><span class="e">🍽️</span><span class="n">لوحة تحكم البوفيهات</span><span class="ar">‹</span></a><button class="cp" data-u="buffet-panel-8051368664ed.html" aria-label="نسخ رابط لوحة تحكم البوفيهات">نسخ</button></div><div class="it"><a class="go" href="attendance.html" target="_blank" rel="noopener"><span class="e">🕘</span><span class="n">تبصيم الموظفين</span><span class="ar">‹</span></a><button class="cp" data-u="attendance.html" aria-label="نسخ رابط تبصيم الموظفين">نسخ</button></div></div></section><section><h2>🌐 صفحات الزباين</h2><div class="list"><div class="it"><a class="go" href="tanourko-links.html" target="_blank" rel="noopener"><span class="e">🏠</span><span class="n">الموقع الرئيسي</span><span class="ar">‹</span></a><button class="cp" data-u="tanourko-links.html" aria-label="نسخ رابط الموقع الرئيسي">نسخ</button></div><div class="it"><a class="go" href="menu.html" target="_blank" rel="noopener"><span class="e">📖</span><span class="n">المنيو</span><span class="ar">‹</span></a><button class="cp" data-u="menu.html" aria-label="نسخ رابط المنيو">نسخ</button></div><div class="it"><a class="go" href="buffets.html" target="_blank" rel="noopener"><span class="e">🥘</span><span class="n">البوفيهات</span><span class="ar">‹</span></a><button class="cp" data-u="buffets.html" aria-label="نسخ رابط البوفيهات">نسخ</button></div><div class="it"><a class="go" href="rate-staff.html" target="_blank" rel="noopener"><span class="e">⭐</span><span class="n">تقييم الموظفين</span><span class="ar">‹</span></a><button class="cp" data-u="rate-staff.html" aria-label="نسخ رابط تقييم الموظفين">نسخ</button></div><div class="it"><a class="go" href="leaderboard.html" target="_blank" rel="noopener"><span class="e">🏆</span><span class="n">ترتيب الموظفين</span><span class="ar">‹</span></a><button class="cp" data-u="leaderboard.html" aria-label="نسخ رابط ترتيب الموظفين">نسخ</button></div><div class="it"><a class="go" href="tanourko-loyalty.html" target="_blank" rel="noopener"><span class="e">🎁</span><span class="n">بطاقة الولاء</span><span class="ar">‹</span></a><button class="cp" data-u="tanourko-loyalty.html" aria-label="نسخ رابط بطاقة الولاء">نسخ</button></div></div></section><section><h2>📦 مشاريع ثانية</h2><p class="sub">لها دخول خاص فيها</p><div class="list"><div class="it"><a class="go" href="https://smartwebuae-hash.github.io/betefor-cafe/admin.html" target="_blank" rel="noopener"><span class="e">☕</span><span class="n">لوحة تحكم بيتيفور</span><span class="ar">‹</span></a><button class="cp" data-u="https://smartwebuae-hash.github.io/betefor-cafe/admin.html" aria-label="نسخ رابط لوحة تحكم بيتيفور">نسخ</button></div><div class="it"><a class="go" href="https://smartwebuae-hash.github.io/betefor-cafe/" target="_blank" rel="noopener"><span class="e">🧁</span><span class="n">موقع بيتيفور</span><span class="ar">‹</span></a><button class="cp" data-u="https://smartwebuae-hash.github.io/betefor-cafe/" aria-label="نسخ رابط موقع بيتيفور">نسخ</button></div><div class="it"><a class="go" href="https://smartwebuae-hash.github.io/tanourko-inventory/" target="_blank" rel="noopener"><span class="e">📦</span><span class="n">جرد المخزون</span><span class="ar">‹</span></a><button class="cp" data-u="https://smartwebuae-hash.github.io/tanourko-inventory/" aria-label="نسخ رابط جرد المخزون">نسخ</button></div><div class="it"><a class="go" href="https://smartwebuae-hash.github.io/tanourko-radio.html/" target="_blank" rel="noopener"><span class="e">📻</span><span class="n">لاسلكي تنوركو</span><span class="ar">‹</span></a><button class="cp" data-u="https://smartwebuae-hash.github.io/tanourko-radio.html/" aria-label="نسخ رابط لاسلكي تنوركو">نسخ</button></div><div class="it"><a class="go" href="https://smartwebuae-hash.github.io/Saif/" target="_blank" rel="noopener"><span class="e">📄</span><span class="n">عقود الإيجار</span><span class="ar">‹</span></a><button class="cp" data-u="https://smartwebuae-hash.github.io/Saif/" aria-label="نسخ رابط عقود الإيجار">نسخ</button></div></div></section>
 <div class="row"><button class="btn primary" id="copyAll" type="button">📋 نسخ كل الروابط</button></div>
 <div class="tip"><b>احفظ هذي الصفحة على شاشة الجوال:</b><br>
@@ -75,7 +92,7 @@ var sb=window.supabase.createClient('https://iekotptltmkjmieauhqc.supabase.co','
 async function enter(user){
   var r=await sb.from('menu_admins').select('email').ilike('email',user.email).maybeSingle();
   if(r.error||!r.data){await sb.auth.signOut();$('loginErr').textContent='هذا الحساب ما عنده صلاحية المشرف';return}
-  $('loginView').hidden=true;$('status').innerHTML='<b>● مسجّل دخول</b> — لوحات التحكم تفتح بدون كلمة مرور';
+  $('loginView').hidden=true;vLoad();$('status').innerHTML='<b>● مسجّل دخول</b> — لوحات التحكم تفتح بدون كلمة مرور';
 }
 sb.auth.getSession().then(function(x){if(x.data.session)enter(x.data.session.user)});
 $('loginForm').onsubmit=async function(e){
@@ -85,6 +102,68 @@ $('loginForm').onsubmit=async function(e){
   if(r.error){$('loginErr').textContent=/Invalid/i.test(r.error.message)?'كلمة المرور غلط':r.error.message;return}
   enter(r.data.user);
 };
+
+/* ===== خزنة كلمات المرور (جدول admin_vault في Supabase) ===== */
+var V=[],editing=null,shown={};
+var SQL="create table if not exists public.admin_vault (\n  id uuid primary key default gen_random_uuid(),\n  name text not null,\n  username text,\n  secret text,\n  url text,\n  note text,\n  updated_at timestamptz default now()\n);\nalter table public.admin_vault enable row level security;\ncreate policy \"admins only\" on public.admin_vault for all to authenticated\n  using (exists (select 1 from public.menu_admins m where lower(m.email)=lower(auth.jwt()->>'email')))\n  with check (exists (select 1 from public.menu_admins m where lower(m.email)=lower(auth.jwt()->>'email')));";
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+async function vLoad(){
+  var r=await sb.from('admin_vault').select('*').order('name');
+  if(r.error){
+    if(/admin_vault|does not exist|schema cache|42P01|PGRST205/i.test((r.error.code||'')+' '+r.error.message))return vSetup();
+    $('vault').innerHTML='<div class="empty">تعذر التحميل: '+esc(r.error.message)+'</div>';return;
+  }
+  V=r.data||[];vRender();
+}
+function vSetup(){
+  $('vAdd').hidden=true;
+  $('vault').innerHTML='<div class="setup"><b>خطوة وحدة قبل أول استخدام:</b><br>افتح Supabase ← مشروع تنوركو ← <b>SQL Editor</b> ← الصق هذا الكود واضغط <b>Run</b>، وبعدها حدّث هذي الصفحة.<pre id="sqlBox">'+esc(SQL)+'</pre><button class="btn primary" id="sqlCopy" type="button">📋 نسخ الكود</button></div>';
+  $('sqlCopy').onclick=function(){copy(SQL).then(function(){toast('✅ تم نسخ الكود')})};
+}
+function vRender(){
+  $('vAdd').hidden=false;
+  if(editing)return vEditor();
+  if(!V.length){$('vault').innerHTML='<div class="empty">ما في كلمات مرور محفوظة. اضغط «+ إضافة كلمة مرور».</div>';return}
+  $('vault').innerHTML=V.map(function(v){
+    var s=shown[v.id];
+    return '<div class="v"><div class="v-h"><b>'+esc(v.name)+'</b>'+(v.url?'<a class="mini" href="'+esc(v.url)+'" target="_blank" rel="noopener">فتح</a>':'')+'<button class="mini" data-e="'+v.id+'">تعديل</button></div>'+
+      (v.username?'<div class="v-r"><span class="k">المستخدم</span><code>'+esc(v.username)+'</code><button class="mini" data-c="u" data-id="'+v.id+'">نسخ</button></div>':'')+
+      (v.secret?'<div class="v-r"><span class="k">كلمة المرور</span><code>'+(s?esc(v.secret):'••••••••')+'</code><button class="mini" data-s="'+v.id+'">'+(s?'إخفاء':'إظهار')+'</button><button class="mini" data-c="p" data-id="'+v.id+'">نسخ</button></div>':'')+
+      (v.note?'<div class="v-note">'+esc(v.note)+'</div>':'')+'</div>';
+  }).join('');
+}
+function vEditor(){
+  var v=editing;
+  $('vault').innerHTML='<div class="ed"><label>الاسم (مثلًا: لوحة المنيو، حساب Supabase)<input id="fN" value="'+esc(v.name)+'"></label>'+
+    '<label>اسم المستخدم أو الإيميل<input id="fU" class="ltr" value="'+esc(v.username)+'" autocomplete="off"></label>'+
+    '<label>كلمة المرور<input id="fP" class="ltr" value="'+esc(v.secret)+'" autocomplete="off"></label>'+
+    '<label>الرابط (اختياري)<input id="fL" class="ltr" value="'+esc(v.url)+'" placeholder="https://..."></label>'+
+    '<label>ملاحظة (اختياري)<textarea id="fT" rows="2">'+esc(v.note)+'</textarea></label>'+
+    '<div class="row" style="margin:0"><button class="btn primary" id="fSave" type="button">حفظ</button><button class="btn" id="fCancel" type="button">إلغاء</button>'+(v.id?'<button class="btn" id="fDel" type="button" style="color:var(--danger)">حذف</button>':'')+'</div></div>';
+  $('fN').focus();
+  $('fCancel').onclick=function(){editing=null;vRender()};
+  $('fSave').onclick=async function(){
+    var row={name:$('fN').value.trim(),username:$('fU').value.trim(),secret:$('fP').value,url:$('fL').value.trim(),note:$('fT').value.trim(),updated_at:new Date().toISOString()};
+    if(!row.name){toast('اكتب الاسم');return}
+    this.disabled=true;
+    var r=v.id?await sb.from('admin_vault').update(row).eq('id',v.id):await sb.from('admin_vault').insert(row);
+    if(r.error){this.disabled=false;toast('❌ '+r.error.message);return}
+    editing=null;toast('✅ تم الحفظ');vLoad();
+  };
+  if(v.id)$('fDel').onclick=async function(){
+    if(!confirm('حذف «'+v.name+'»؟'))return;
+    var r=await sb.from('admin_vault').delete().eq('id',v.id);
+    if(r.error){toast('❌ '+r.error.message);return}
+    editing=null;toast('تم الحذف');vLoad();
+  };
+}
+$('vAdd').onclick=function(){editing={name:'',username:'',secret:'',url:'',note:''};vRender();$('vault').scrollIntoView({behavior:'smooth',block:'center'})};
+$('vault').addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;
+  if(b.dataset.e){editing=Object.assign({},V.find(function(x){return x.id===b.dataset.e}));vRender()}
+  else if(b.dataset.s){shown[b.dataset.s]=!shown[b.dataset.s];vRender()}
+  else if(b.dataset.c){var v=V.find(function(x){return x.id===b.dataset.id});copy(b.dataset.c==='u'?v.username:v.secret).then(function(){toast('✅ تم النسخ')})}
+});
 $('logout').onclick=async function(){await sb.auth.signOut();location.reload()};
 })();
 </script></body></html>
