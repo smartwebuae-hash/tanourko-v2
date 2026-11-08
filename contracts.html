@@ -103,12 +103,12 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 60px}
 .s-no input{width:150px;font-size:24px;font-family:'Tajawal',sans-serif;letter-spacing:2px}
 .s-no .paid{direction:rtl;text-align:left;color:var(--pen);font-weight:700;font-size:18px;margin-top:4px;font-family:'Tajawal',sans-serif;display:flex;flex-direction:column;align-items:flex-end;gap:2px;padding-left:40px}
 .s-no .paid span{white-space:nowrap}
-.logo{grid-column:2;grid-row:1;text-align:center;color:#8b5a2b;line-height:1}
-.logo .ar{font-family:'Amiri',serif;font-weight:700;font-size:74px;line-height:1.05;background:linear-gradient(180deg,#b98a4e,#7a4a22);-webkit-background-clip:text;background-clip:text;color:transparent}
-.logo .en{font-size:12px;letter-spacing:7px;color:#6b4a2f;margin-top:2px;font-family:Georgia,serif}
-.logo .sub{font-size:15px;font-weight:800;color:#b98a4e;margin-top:4px}
-.logo .sub2{font-size:10px;font-weight:800;letter-spacing:1.5px;color:#6b4a2f;margin-top:2px;font-family:Georgia,serif}
-.titlebar{align-self:center;margin:14px 0 18px;background:linear-gradient(180deg,#f0b552,#e39b2f);color:#1b0f06;font-weight:900;font-size:24px;padding:6px 46px;box-shadow:4px 4px 0 #2a2a2a}
+.logo{grid-column:2;grid-row:1;text-align:center;line-height:0}
+.logo img{height:176px;width:auto;display:block;margin:0 auto}
+.wm{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.wm img{position:absolute;left:50%;top:32.5%;width:418px;transform:translateX(-50%);opacity:.075}
+.sheet>*:not(.wm){position:relative;z-index:1}
+.titlebar{align-self:center;margin:10px 0 16px;background:#f7a23b;color:#111;font-weight:900;font-size:24px;padding:3px 22px;border-bottom:2.5px solid #222;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .frow{display:flex;align-items:flex-end;gap:10px;margin-bottom:6px;min-height:36px}
 .frow .lb{width:128px;flex:none;font-weight:800;font-size:18px;color:#111;white-space:nowrap}
 .frow .val{flex:1;display:flex;align-items:flex-end;gap:10px}
@@ -120,8 +120,8 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 60px}
 .req{position:relative;flex:1}
 .req textarea{display:block;resize:none;line-height:34px;padding:0 6px;min-height:170px;overflow:hidden;background:repeating-linear-gradient(180deg,transparent 0 32px,#9a9a9a 32px 33px,transparent 33px 34px) local}
 .sec{margin-top:16px}
-.sec h4{text-align:center;color:var(--red);font-size:17px;font-weight:900;margin-bottom:4px}
-.sec h4 span{border-bottom:2px solid var(--red);padding-bottom:1px}
+.sec h4{text-align:center;color:#c0161d;font-size:17px;font-weight:900;margin-bottom:4px}
+.sec h4 span{border-bottom:1.6px solid #c0161d;padding-bottom:1px}
 .sec h4 .en{font-family:Georgia,'Times New Roman',serif;font-size:15px;letter-spacing:.3px}
 .sec h4 .bar{border:0;color:#333;margin:0 6px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);column-gap:56px;row-gap:2px}
@@ -130,10 +130,11 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 60px}
 .grid1 input{padding:6px 4px 2px;text-align:center}
 .addln{display:block;margin:4px auto 0;border:1px dashed #c9b89f;background:#fffaf3;color:var(--muted);border-radius:100px;font-size:12px;font-weight:800;padding:2px 12px}
 .s-bottom{display:grid;grid-template-columns:190px 1fr 190px;column-gap:16px;align-items:end;margin-top:6px}
-.stamp{width:180px;height:180px;align-self:center;justify-self:end;opacity:.88;-webkit-mask:url(tanourko-stamp.png) center/contain no-repeat;mask:url(tanourko-stamp.png) center/contain no-repeat;background:#2b3f94;transform:rotate(-8deg)}
+.stamp{width:180px;height:auto;align-self:center;justify-self:end;display:block}
 .sign{justify-self:start;text-align:center;padding-bottom:14px;grid-column:1;grid-row:1}
 .sign .who{font-weight:900;font-size:17px}
-.sign svg{display:block;width:200px;height:60px;margin-top:4px}
+.sign .who{color:#2b2f8f}
+.sign img{display:block;width:200px;height:auto;margin-top:2px}
 .drinks{grid-column:2;grid-row:1}
 .s-foot{margin-top:auto;padding-top:14px}
 .s-foot .ln{border-top:2.4px solid #c98a3a;margin-bottom:10px}
@@ -167,7 +168,8 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 60px}
   .s-top{grid-template-columns:1fr auto;min-height:0}
   .logo{grid-column:1/-1;grid-row:1}
   .s-no{grid-column:1/-1;grid-row:2;padding-top:10px}
-  .logo .ar{font-size:56px}
+  .logo img{height:140px}
+  .wm img{width:min(418px,80%)}
   .titlebar{font-size:19px;padding:5px 22px}
   .frow .lb{width:96px;font-size:15px}
   .sheet input,.sheet textarea{font-size:16px}
@@ -200,9 +202,8 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 60px}
   .s-bottom{grid-template-columns:190px 1fr 190px}
   .drinks{grid-column:2;grid-row:1}.sign{grid-column:1;grid-row:1}.stamp{grid-column:3;grid-row:1;width:170px;height:170px}
   .frow .lb{width:128px;font-size:17px}
-  .logo .ar{font-size:66px;background:none;color:#8b5a2b}
-  .titlebar{font-size:22px;padding:5px 46px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .stamp,.logo .ar,.s-foot .c2 i{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .wm img{width:418px}
+  .s-foot .c2 i{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .s-foot .c1{font-size:23px}.s-foot .c2{flex-direction:row;gap:30px;font-size:13px}
 }
 .datebox .dtxt{color:var(--pen);font-weight:700;font-size:17px;direction:ltr;display:inline-block;padding:4px 0 2px}
@@ -266,17 +267,13 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 60px}
     </aside>
 
     <article class="sheet" id="sheet">
+      <div class="wm" aria-hidden="true"><img src="contract-logo.webp" alt=""></div>
       <div class="s-top">
         <div class="s-no">
           <div class="row"><b>No:</b><input class="dots" data-k="noText" id="noText" placeholder="المبلغ" aria-label="No"></div>
           <div class="paid" id="paidTxt"></div>
         </div>
-        <div class="logo" aria-label="تنوركو">
-          <div class="ar">تنوركو</div>
-          <div class="en">TANOURKO</div>
-          <div class="sub">مطعم ومطبخ تنوركو</div>
-          <div class="sub2">RESTAURANT &amp; KITCHEN</div>
-        </div>
+        <div class="logo"><img src="contract-logo.webp" alt="تنوركو — مطعم ومطبخ تنوركو"></div>
       </div>
       <div class="titlebar">عقد تنظيم حفلة (بوفيه)</div>
 
@@ -329,7 +326,6 @@ var SUGGEST={
   drinks:['مياه معدنية','مشروبات غازية','مشروب غازي ميكس','ليمون نعناع','برتقال','منجا','فراولة','رمان','أناناس','عصاير ميكس','صحن فواكه']
 };
 var STATUS={confirmed:['مؤكد','ok'],pending:['مبدئي','warn'],done:['تم التنفيذ',''],cancelled:['ملغي','bad']};
-var SIGN_SVG='<svg viewBox="0 0 200 60" fill="none" stroke="#1f3b9c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 30 H192"/><path d="M128 14 c-4 10-6 22-4 34 M120 44 c6-2 12-8 14-16 c2 6 4 12 10 12 c4 0 6-6 8-12 M150 26 c0 10 2 18 4 26"/></svg>';
 
 var sb=null, DB={v:1,seq:0,items:[]}, cur=null, curDirty=false, filter='up';
 
@@ -475,7 +471,7 @@ function renderSecs(){
     var head='<h4><span>'+s.ar+'</span><span class="bar">|</span><span class="en">'+s.en+'</span></h4>';
     var body='<div class="'+(s.cols===1?'grid1':'grid3')+'">'+cells+'</div><button type="button" class="addln" data-add="'+s.k+'">+ سطر</button>';
     if(s.k==='drinks'){
-      h+='<div class="s-bottom"><div class="sign"><div class="who" id="signWho">'+esc(cur.signer||'')+'</div>'+SIGN_SVG+'</div><div class="drinks sec">'+head+body+'</div><div class="stamp" role="img" aria-label="ختم تنوركو"></div></div>';
+      h+='<div class="s-bottom"><div class="sign"><div class="who" id="signWho">'+esc(cur.signer||'')+'</div><img src="contract-sign.webp" alt="التوقيع"></div><div class="drinks sec">'+head+body+'</div><img class="stamp" src="contract-stamp.webp" alt="ختم تنوركو"></div>';
     }else h+='<div class="sec">'+head+body+'</div>';
   });
   $('secs').innerHTML=h;
