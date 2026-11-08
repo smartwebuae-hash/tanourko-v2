@@ -59,6 +59,9 @@ main{max-width:900px;margin:0 auto;padding:14px 16px 40px}
 .recent li{padding:8px 2px;border-bottom:1px solid var(--line)}.recent li:last-child{border-bottom:0}
 .recent .r1{display:flex;gap:8px;justify-content:space-between;font-weight:700;font-size:14px}
 .recent .r2{color:var(--muted);font-size:13px}
+.recent li.ck .r2 b{color:var(--ok)}
+.conv{margin:0 0 12px;font-size:14.5px}.conv b{font-size:20px;color:var(--ok)}
+.card h3{font-size:14px;margin:0 0 8px;color:var(--muted)}
 .recent .t{white-space:nowrap;color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
 .empty{color:var(--muted);text-align:center;padding:14px;font-size:14px}
 .setup{background:var(--soft);border:1px dashed var(--brand);border-radius:12px;padding:14px;font-size:14px}
@@ -105,12 +108,17 @@ var SB_KEY='sb_publishable_35u5V1apSr2-DCpjp8ltmg_gIJzhXEN';
 var MAX_ROWS=20000;
 var $=function(id){return document.getElementById(id)};
 var loadedRange=null, mapView=null;
+var allRows=[], clicks=[];
 var sb=null, range='today', rows=[], map=null, layer=null, timer=null, busy=false;
 
 var SQL="create table if not exists public.site_visits (\n  id bigint generated always as identity primary key,\n  created_at timestamptz not null default now(),\n  visitor text, session text, page text, source text, ref text,\n  country text, country_code text, region text, city text,\n  lat double precision, lon double precision,\n  tz text, lang text, device text, os text, browser text, screen text\n);\ncreate index if not exists site_visits_created_idx on public.site_visits (created_at desc);\nalter table public.site_visits enable row level security;\ngrant insert on public.site_visits to anon, authenticated;\ngrant select, delete on public.site_visits to authenticated;\ndrop policy if exists \"log visits\" on public.site_visits;\ncreate policy \"log visits\" on public.site_visits for insert to anon, authenticated\n  with check (char_length(coalesce(page,''))<=120 and char_length(coalesce(ref,''))<=250 and char_length(coalesce(visitor,''))<=40);\ndrop policy if exists \"admins read visits\" on public.site_visits;\ncreate policy \"admins read visits\" on public.site_visits for select to authenticated\n  using (exists (select 1 from public.menu_admins m where lower(m.email)=lower(auth.jwt()->>'email')));\ndrop policy if exists \"admins delete visits\" on public.site_visits;\ncreate policy \"admins delete visits\" on public.site_visits for delete to authenticated\n  using (exists (select 1 from public.menu_admins m where lower(m.email)=lower(auth.jwt()->>'email')));";
 
 var PAGES={'tanourko-links.html':'🏠 الموقع الرئيسي','index.html':'🏠 الموقع الرئيسي','menu.html':'📖 المنيو','buffets.html':'🥘 البوفيهات','rate-staff.html':'⭐ تقييم الموظفين','tanourko-loyalty.html':'🎁 بطاقة الولاء','leaderboard.html':'🏆 ترتيب الموظفين'};
 var SOURCES={direct:'🔗 رابط مباشر / QR',internal:'↩️ من صفحة ثانية في الموقع',app:'📱 تطبيق تنوركو',google:'🔎 جوجل',instagram:'📸 إنستغرام',snapchat:'👻 سناب شات',tiktok:'🎵 تيك توك',facebook:'📘 فيسبوك',whatsapp:'💬 واتساب',linktree:'🌳 Linktree',qr:'🔳 QR',other:'أخرى'};
+var CLICKS={whatsapp:'💬 اطلب عبر واتساب',order:'🛒 أرسل طلب من المنيو',call:'☎️ اتصل',map:'📍 فتح الخريطة',vcard:'👤 حفظ رقم المطعم',greview:'⭐ تقييم جوجل',instagram:'📸 إنستغرام',snapchat:'👻 سناب شات',tiktok:'🎵 تيك توك',linktree:'🌳 Linktree',promo:'📣 إعلان',celeb:'🌟 المشاهير'};
+var CONTACT={whatsapp:1,order:1,call:1};
+function isClick(r){return r.page&&r.page.indexOf('click:')===0}
+function clickName(r){return r.page.slice(6)}
 var DEVICES={mobile:'📱 جوال',tablet:'📲 تابلت',desktop:'💻 كمبيوتر'};
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -186,10 +194,12 @@ async function load(silent){
   try{
     /* التحديث التلقائي يجيب الزيارات الجديدة بس، عشان ما نستهلك من الباقة المجانية */
     var from=since();
-    if(silent&&rows.length&&loadedRange===range){
-      var fresh=await fetchAll(from,rows[0].created_at);
-      rows=fresh.concat(rows).filter(function(r){return new Date(r.created_at)>=from}).slice(0,MAX_ROWS);
-    }else{rows=await fetchAll(from);loadedRange=range}
+    if(silent&&allRows.length&&loadedRange===range){
+      var fresh=await fetchAll(from,allRows[0].created_at);
+      allRows=fresh.concat(allRows).filter(function(r){return new Date(r.created_at)>=from}).slice(0,MAX_ROWS);
+    }else{allRows=await fetchAll(from);loadedRange=range}
+    rows=allRows.filter(function(r){return !isClick(r)});
+    clicks=allRows.filter(isClick);
     var live=await sb.from('site_visits').select('visitor').gte('created_at',new Date(Date.now()-5*60000).toISOString()).limit(1000);
     if(live.error)throw live.error;
     render(new Set((live.data||[]).map(function(r){return r.visitor})).size);
@@ -209,9 +219,9 @@ function setup(){
     });
   };
 }
-function count(key){
+function count(key,list){
   var m=new Map();
-  rows.forEach(function(r){var k=key(r);if(k==null)return;var o=m.get(k);if(!o){o={k:k,n:0,v:new Set(),r:r};m.set(k,o)}o.n++;o.v.add(r.visitor)});
+  (list||rows).forEach(function(r){var k=key(r);if(k==null)return;var o=m.get(k);if(!o){o={k:k,n:0,v:new Set(),r:r};m.set(k,o)}o.n++;o.v.add(r.visitor)});
   return Array.from(m.values()).sort(function(a,b){return b.n-a.n});
 }
 function bars(list,label,limit){
@@ -258,6 +268,17 @@ function render(liveCount){
     '<div class="kpi"><div class="v">'+num(visitors)+'</div><div class="l">زوار مختلفين — '+lbl+'</div></div>'+
     '<div class="kpi"><div class="v">'+num(rows.length)+'</div><div class="l">عدد الزيارات (فتح صفحة)</div></div>'+
     '<div class="kpi"><div class="v">'+num(countries.length)+'</div><div class="l">دول</div></div></div>';
+  /* ---- الضغطات ---- */
+  var byType={};clicks.forEach(function(r){var k=clickName(r);(byType[k]=byType[k]||{n:0,v:new Set()}).n++;byType[k].v.add(r.visitor)});
+  function ck(k){return byType[k]||{n:0,v:new Set()}}
+  var contactPeople=new Set(clicks.filter(function(r){return CONTACT[clickName(r)]}).map(function(r){return r.visitor})).size;
+  var rate=visitors?Math.round(contactPeople/visitors*1000)/10:0;
+  h+='<div class="card"><h2>💬 الضغطات اللي تجيب طلبات</h2><div class="kpis" style="margin-bottom:10px">'+
+    ['whatsapp','order','call','map'].map(function(k){var c=ck(k);
+      return '<div class="kpi"><div class="v">'+num(c.n)+'</div><div class="l">'+CLICKS[k]+(c.v.size&&c.v.size!==c.n?' · '+num(c.v.size)+' شخص':'')+'</div></div>'}).join('')+'</div>'+
+    '<p class="conv">من كل 100 زائر، <b>'+rate+'</b> تواصلوا معك (واتساب أو طلب أو اتصال) — '+num(contactPeople)+' من '+num(visitors)+' زائر</p>'+
+    '<div class="cols"><div><h3>🧭 اللي تواصلوا، من وين جاو؟</h3>'+bars(count(function(r){return CONTACT[clickName(r)]?r.source:null},clicks),function(o){return esc(sourceName(o.k))})+'</div>'+
+    '<div><h3>👆 كل الضغطات</h3>'+bars(count(clickName,clicks),function(o){return esc(CLICKS[o.k]||o.k)},12)+'</div></div></div>';
   if(rows.length>=MAX_ROWS)h+='<p class="empty">يعرض آخر '+num(MAX_ROWS)+' زيارة فقط.</p>';
   h+='<div class="card"><h2>🗺️ أماكن الزوار على الخريطة</h2><div id="map" role="img" aria-label="خريطة أماكن الزوار"></div></div>';
   h+='<div class="card"><h2>📈 '+(range==='today'?'الزيارات حسب الساعة':'الزيارات حسب اليوم')+'</h2>'+days()+'</div>';
@@ -269,9 +290,10 @@ function render(liveCount){
     '<div class="card"><h2>📱 الأجهزة</h2>'+bars(devices,function(o){return esc(DEVICES[o.k]||o.k)})+'</div>'+
     '<div class="card"><h2>⚙️ نظام التشغيل</h2>'+bars(oss,function(o){return esc(o.k)})+'</div>'+
   '</div></div>';
-  h+='<div class="card"><h2>🕒 آخر الزيارات</h2>'+(rows.length?'<ul class="recent">'+
-    rows.slice(0,40).map(function(r){
-      return '<li><div class="r1"><span>'+placeName(r)+'</span><span class="t">'+esc(ago(r.created_at))+'</span></div><div class="r2">'+esc(pageName(r.page))+' · '+esc(DEVICES[r.device]||r.device||'')+(r.os?' '+esc(r.os):'')+' · '+esc(sourceName(r.source))+'</div></li>';
+  h+='<div class="card"><h2>🕒 آخر الزيارات والضغطات</h2>'+(allRows.length?'<ul class="recent">'+
+    allRows.slice(0,40).map(function(r){
+      var c=isClick(r);
+      return '<li'+(c?' class="ck"':'')+'><div class="r1"><span>'+placeName(r)+'</span><span class="t">'+esc(ago(r.created_at))+'</span></div><div class="r2">'+(c?'<b>'+esc(CLICKS[clickName(r)]||clickName(r))+'</b>':esc(pageName(r.page)))+' · '+esc(DEVICES[r.device]||r.device||'')+(r.os?' '+esc(r.os):'')+' · '+esc(sourceName(r.source))+'</div></li>';
     }).join('')+'</ul>':'<div class="empty">ما في زيارات في هذي الفترة لين الحين.</div>')+'</div>';
   if(map){try{mapView=[map.getCenter(),map.getZoom()]}catch(e){}map.remove();map=null}
   if(loadedRange!==range)mapView=null;
