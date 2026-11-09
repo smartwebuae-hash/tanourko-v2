@@ -363,7 +363,8 @@ function render(liveCount){
     '<p class="conv">من كل 100 زائر، <b>'+rate+'</b> تواصلوا معك (واتساب أو طلب أو اتصال) — '+num(contactPeople)+' من '+num(visitors)+' زائر</p>'+
     '<div class="cols"><div><h3>🧭 اللي تواصلوا، من وين جاو؟</h3>'+bars(count(function(r){return CONTACT[clickName(r)]?r.source:null},clicks),function(o){return esc(sourceName(o.k))})+'</div>'+
     '<div><h3>👆 كل الضغطات</h3>'+bars(count(clickName,clicks),function(o){return esc(CLICKS[o.k]||o.k)},12)+'</div></div></div>';
-  h+=chatCard();
+  /* قسم المحادثات يظهر بس إذا فيه محادثات محفوظة (الشات موقوف حالياً) */
+  if(chats&&chats.length)h+=chatCard();
   if(rows.length>=MAX_ROWS)h+='<p class="empty">يعرض آخر '+num(MAX_ROWS)+' زيارة فقط.</p>';
   h+='<div class="card"><h2>🗺️ أماكن الزوار على الخريطة</h2><div id="map" role="img" aria-label="خريطة أماكن الزوار"></div></div>';
   h+='<div class="card"><h2>📈 '+(range==='today'?'الزيارات حسب الساعة':'الزيارات حسب اليوم')+'</h2>'+days()+'</div>';
