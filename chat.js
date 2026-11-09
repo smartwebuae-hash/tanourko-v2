@@ -326,7 +326,7 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
     var scored = ITEMS.map(function (x) {
       var s = 0;
       if (!allowTabkh && x.sec === 'الطبخ') return { x: x, s: 0 };
-      if (x.nn && nq.indexOf(x.nn) >= 0) s += 10;
+      if (x.nn && (' ' + nq + ' ').indexOf(' ' + x.nn + ' ') >= 0) s += 10;
       words.forEach(function (w) {
         var w2 = w.replace(/^ال/, '');
         if (w2.length < 2) return;
@@ -355,18 +355,25 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
     var extra = [salads(1)[0], bySec(/العصائر/, 1)[0], bySec(/الحلويات/, 1)[0]];
     return ids.concat(extra.filter(function (i) { return i != null && ids.indexOf(i) < 0; }));
   }
-  var SECTIONS = [
-    [/عروض|عرض|صواني|صينيه/, /العروض/, 'هذي كل عروضنا 🔥 تكفي 5–6 أشخاص:'],
-    [/سلط/, /المقبلات البارده|المقبلات الباردة/, 'سلطاتنا ومقبلاتنا الباردة 🥗'],
-    [/مقبلات/, /المقبلات/, 'المقبلات عندنا 👇'],
-    [/دجاج/, /الدجاج/, 'أطباق الدجاج 🍗'],
-    [/سمك|اسماك|سمج|بحري|روبيان/, /الاسماك|الأسماك/, 'أطباق الأسماك 🐟'],
-    [/صالون/, /الصالونه|الصالونة/, 'الصالونة 🍲'],
-    [/حلو|حلي|حلا|كنافه/, /الحلويات/, 'حلوياتنا 🍰'],
-    [/عصير|عصاير|ميلك|مشروب|مشاريب/, /العصائر|المشروبات/, 'العصائر والمشروبات 🥤'],
-    [/حراره|حرارات|هريس|عصيده|خبيصه|ثريد|بلاليط|خنفروش|لقيمات|قيمات/, /الحرارات/, 'الحرارات (الحجز قبل 20 ساعة) 🍯'],
-    [/رئيسي|لحم|لحوم/, /الاطباق الرئيسيه|الأطباق الرئيسية/, 'أطباقنا الرئيسية 🍖'],
+  /* الأصناف حسب المكوّن من كل الأقسام، والأغلى أولاً (ما يدخل فيها «الطبخ» ولا الإضافات) */
+  var MEAT = /(^|[ (])(ال)?لحم|حوار|خروف|تيس|ذبيح/, FISH = /سمك|سيباس|سبريم|سلمون|كنعد|روبيان|عوال|شعري|جشيد/;
+  var GROUPS = [
+    { q: /عروض|العرض|صواني|صينيه/, m: function (x) { return /العروض/.test(x.sec); }, t: 'هذي كل عروضنا 🔥 تكفي 5–6 أشخاص' },
+    { q: /(^| )(ب|و|بال|وال|ال)?لحم|لحوم|حوار/, m: function (x) { return MEAT.test(x.n) && !/ذبائح/.test(x.sec); }, t: 'أفخم وأفضل اللحوم عندنا 🍖', top: true },
+    { q: /دجاج|دياي|فراخ/, m: function (x) { return /دجاج/.test(x.n) || /الدجاج/.test(x.sec); }, t: 'كل أطباق الدجاج عندنا 🍗' },
+    { q: /سمك|سمج|اسماك|بحري|بحريات|روبيان|ربيان|هامور|سلمون/, m: function (x) { return FISH.test(x.n) || /الأسماك|الاسماك/.test(x.sec); }, t: 'أفضل أطباق السمك والبحريات 🐟' },
+    { q: /صالون/, m: function (x) { return /صالون/.test(x.n) && !/ذبائح/.test(x.sec); }, t: 'الصالونة 🍲' },
+    { q: /مقبلات|مقبل|محاشي|محشي|ورق عنب|سمبوس/, m: function (x) { return /المقبلات/.test(x.sec); }, t: 'المقبلات الباردة والساخنة 👇' },
+    { q: /حلو|حلي|حلا|كنافه|حلويات/, m: function (x) { return /الحلويات/.test(x.sec) || (/الحرارات|طلبات مسبقه|طلبات مسبقة/.test(x.sec) && /عصيد|خبيص|محلي|قيمات|خنفروش|بلاليط|جباب/.test(x.n)); }, t: 'حلوياتنا 🍰 (الحرارات والطلبات المسبقة تنحجز قبل)' },
+    { q: /عصير|عصاير|ميلك|شيك|مشروب|مشاريب|بارد/, m: function (x) { return /العصائر|المشروبات/.test(x.sec); }, t: 'العصائر والمشروبات 🥤' },
+    { q: /حراره|حرارات|هريس|ثريد|مرقوق/, m: function (x) { return /الحرارات/.test(x.sec); }, t: 'الحرارات (الحجز قبل 20 ساعة) 🍯' },
   ];
+  function group(g) {
+    var ids = desc(ITEMS.filter(function (x) { return x.sec !== 'الطبخ' && !/إضافات/.test(x.sec) && g.m(x); }).map(function (x) { return x.id; }));
+    /* مع اللحوم نبدأ بأفخم ذبيحة خروف وتيس */
+    if (g.top) ids = bySec(/ذبائح خروف/, 1).concat(bySec(/ذبائح تيس/, 1), ids);
+    return ids.slice(0, 14);
+  }
   function localReply(q) {
     var nq = norm(q);
     if (ORDER_RE.test(nq)) return { reply: 'حياك 🙌 عبّ التفاصيل تحت، وبتطلع لك رسالة جاهزة فيها كل طلبك ترسلها للمدير على الواتساب:', dishes: [], handoff: false, order: true };
@@ -394,8 +401,8 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
     var f = findItems(q, false), strong = f.best >= 4;
     if (!strong && /سلط/.test(nq)) return { reply: 'سلطاتنا 🥗 (من الأفضل للأقل)', dishes: salads(12), handoff: false };
     if (!strong) {
-      for (var i = 0; i < SECTIONS.length; i++) {
-        if (SECTIONS[i][0].test(nq)) return { reply: SECTIONS[i][2] + ' (من الأفضل للأقل)', dishes: bySec(SECTIONS[i][1], 12), handoff: false };
+      for (var i = 0; i < GROUPS.length; i++) {
+        if (GROUPS[i].q.test(nq)) return { reply: GROUPS[i].t + ' — من الأفضل للأقل:' + (GROUPS[i].top ? '\nوللذبائح كاملة اسألني عن «الذبائح» 🐑' : '') + '\n\nويكمّل طلبك سلطة وعصير، اسألني عنهم 😋', dishes: group(GROUPS[i]), handoff: false };
       }
     }
     if (f.ids.length) {
