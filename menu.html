@@ -637,8 +637,17 @@ async function loadMenu(){
   return window.DEFAULT_MENU;
 }
 menuEl.innerHTML='<p class="empty" style="display:block">جاري تحميل المنيو…</p>';
-loadMenu().then(render); drawFab(false);
+loadMenu().then(m=>{render(m);window.TK_MENU=m;if(window.tkChatSetMenu)tkChatSetMenu(m)}); drawFab(false);
+/* ربط مساعد تنوركو (chat.js): صور الأطباق وإضافة الطبق للسلة من داخل الشات */
+window.tkImg=imgUrl;
+window.tkAddToCart=(it,i)=>{
+  const z=it.sizes&&it.sizes[i], u=z?{label:z[0],val:+z[1]}:(it.txt?{label:'',val:null,txt:it.txt}:{label:'',val:+it.p});
+  const key=it.n+'|'+u.label, ex=cart.find(c=>c.k===key);
+  if(ex){if(ex.q<50)ex.q++}else cart.push({k:key,n:it.n,l:u.label,v:u.val,t:u.txt||'',img:it.img||'',q:1});
+  saveCart(); drawFab(true);
+};
 </script>
 <script src="visit.js" defer></script>
+<script src="chat.js" defer></script>
 </body>
 </html>

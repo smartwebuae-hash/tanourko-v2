@@ -70,6 +70,22 @@ main{max-width:900px;margin:0 auto;padding:14px 16px 40px}
 .foot label{display:inline-flex;gap:6px;align-items:center;cursor:pointer;font-weight:700}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:12px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s;z-index:3000;max-width:calc(100% - 32px);text-align:center}
 .toast.on{opacity:1}
+.chats{display:grid;gap:6px}
+.cv{border:1px solid var(--line);border-radius:12px;background:var(--soft)}
+.cv summary{cursor:pointer;list-style:none;padding:9px 11px;display:grid;grid-template-columns:1fr auto;gap:2px 8px}
+.cv summary::-webkit-details-marker{display:none}
+.cv summary .q{font-weight:700;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cv summary .t{color:var(--muted);font-size:12.5px;white-space:nowrap}
+.cv summary small{grid-column:1/-1;color:var(--muted);font-size:12.5px}
+.cv .tag{font-style:normal;font-size:11.5px;background:var(--brand);color:#fff;border-radius:6px;padding:1px 6px;margin-inline-end:6px}
+.cv .tag.ok{background:var(--ok)}
+.cv .tr{padding:4px 10px 12px;display:flex;flex-direction:column;gap:6px}
+.cv .mb{max-width:88%;padding:7px 11px;border-radius:12px;font-size:14px;white-space:pre-wrap;word-wrap:break-word}
+.cv .mb.u{align-self:flex-end;background:var(--brand);color:#fff}
+.cv .mb.b{align-self:flex-start;background:var(--surface);border:1px solid var(--line)}
+.cv .mb i{display:block;font-style:normal;font-size:11px;opacity:.75;margin-top:2px}
+.cv .mb .ds{font-size:12.5px;margin-top:4px;opacity:.9}
+.cv .ev{align-self:center;font-size:12.5px;color:var(--ok);font-weight:700}
 .leaflet-container{font-family:'Tajawal',system-ui,sans-serif}
 </style>
 </head>
@@ -108,14 +124,15 @@ var SB_KEY='sb_publishable_35u5V1apSr2-DCpjp8ltmg_gIJzhXEN';
 var MAX_ROWS=20000;
 var $=function(id){return document.getElementById(id)};
 var loadedRange=null, mapView=null;
-var allRows=[], clicks=[];
+var allRows=[], clicks=[], chats=null, chatErr=null;
+var CHAT_SQL="-- جدول محادثات مساعد تنوركو (يظهر في صفحة «زوار الموقع»)\ncreate table if not exists public.chat_logs (\n  id bigint generated always as identity primary key,\n  created_at timestamptz not null default now(),\n  visitor text, convo text, page text,\n  role text,            -- user = الزبون، bot = المساعد، event = إضافة للسلة من الشات\n  text text,\n  dishes text[],        -- الأطباق اللي انعرضت بصورها\n  handoff boolean default false,  -- المساعد حوّل الزبون للاتصال/الواتساب\n  mode text,            -- ai = ذكاء اصطناعي، local = بحث في المنيو بدون ذكاء\n  source text, city text, country_code text\n);\ncreate index if not exists chat_logs_created_idx on public.chat_logs (created_at desc);\nalter table public.chat_logs enable row level security;\ngrant insert on public.chat_logs to anon, authenticated;\ngrant select, delete on public.chat_logs to authenticated;\ndrop policy if exists \"log chats\" on public.chat_logs;\ncreate policy \"log chats\" on public.chat_logs for insert to anon, authenticated\n  with check (char_length(coalesce(text,''))<=2000 and char_length(coalesce(convo,''))<=40 and coalesce(array_length(dishes,1),0)<=8);\ndrop policy if exists \"admins read chats\" on public.chat_logs;\ncreate policy \"admins read chats\" on public.chat_logs for select to authenticated\n  using (exists (select 1 from public.menu_admins m where lower(m.email)=lower(auth.jwt()->>'email')));\ndrop policy if exists \"admins delete chats\" on public.chat_logs;\ncreate policy \"admins delete chats\" on public.chat_logs for delete to authenticated\n  using (exists (select 1 from public.menu_admins m where lower(m.email)=lower(auth.jwt()->>'email')));";
 var sb=null, range='today', rows=[], map=null, layer=null, timer=null, busy=false;
 
 var SQL="create table if not exists public.site_visits (\n  id bigint generated always as identity primary key,\n  created_at timestamptz not null default now(),\n  visitor text, session text, page text, source text, ref text,\n  country text, country_code text, region text, city text,\n  lat double precision, lon double precision,\n  tz text, lang text, device text, os text, browser text, screen text\n);\ncreate index if not exists site_visits_created_idx on public.site_visits (created_at desc);\nalter table public.site_visits enable row level security;\ngrant insert on public.site_visits to anon, authenticated;\ngrant select, delete on public.site_visits to authenticated;\ndrop policy if exists \"log visits\" on public.site_visits;\ncreate policy \"log visits\" on public.site_visits for insert to anon, authenticated\n  with check (char_length(coalesce(page,''))<=120 and char_length(coalesce(ref,''))<=250 and char_length(coalesce(visitor,''))<=40);\ndrop policy if exists \"admins read visits\" on public.site_visits;\ncreate policy \"admins read visits\" on public.site_visits for select to authenticated\n  using (exists (select 1 from public.menu_admins m where lower(m.email)=lower(auth.jwt()->>'email')));\ndrop policy if exists \"admins delete visits\" on public.site_visits;\ncreate policy \"admins delete visits\" on public.site_visits for delete to authenticated\n  using (exists (select 1 from public.menu_admins m where lower(m.email)=lower(auth.jwt()->>'email')));";
 
 var PAGES={'tanourko-links.html':'🏠 الموقع الرئيسي','index.html':'🏠 الموقع الرئيسي','menu.html':'📖 المنيو','buffets.html':'🥘 البوفيهات','rate-staff.html':'⭐ تقييم الموظفين','tanourko-loyalty.html':'🎁 بطاقة الولاء','leaderboard.html':'🏆 ترتيب الموظفين'};
 var SOURCES={direct:'🔗 رابط مباشر / QR',internal:'↩️ من صفحة ثانية في الموقع',app:'📱 تطبيق تنوركو',google:'🔎 جوجل',instagram:'📸 إنستغرام',snapchat:'👻 سناب شات',tiktok:'🎵 تيك توك',facebook:'📘 فيسبوك',whatsapp:'💬 واتساب',linktree:'🌳 Linktree',qr:'🔳 QR',other:'أخرى'};
-var CLICKS={whatsapp:'💬 اطلب عبر واتساب',order:'🛒 أرسل طلب من المنيو',call:'☎️ اتصل',map:'📍 فتح الخريطة',vcard:'👤 حفظ رقم المطعم',greview:'⭐ تقييم جوجل',instagram:'📸 إنستغرام',snapchat:'👻 سناب شات',tiktok:'🎵 تيك توك',linktree:'🌳 Linktree',promo:'📣 إعلان',celeb:'🌟 المشاهير'};
+var CLICKS={whatsapp:'💬 اطلب عبر واتساب',order:'🛒 أرسل طلب من المنيو',call:'☎️ اتصل',map:'📍 فتح الخريطة',vcard:'👤 حفظ رقم المطعم',greview:'⭐ تقييم جوجل',instagram:'📸 إنستغرام',snapchat:'👻 سناب شات',tiktok:'🎵 تيك توك',linktree:'🌳 Linktree',promo:'📣 إعلان',celeb:'🌟 المشاهير',chat:'🤖 فتح مساعد الشات'};
 var CONTACT={whatsapp:1,order:1,call:1};
 function isClick(r){return r.page&&r.page.indexOf('click:')===0}
 function clickName(r){return r.page.slice(6)}
@@ -198,6 +215,7 @@ async function load(silent){
       var fresh=await fetchAll(from,allRows[0].created_at);
       allRows=fresh.concat(allRows).filter(function(r){return new Date(r.created_at)>=from}).slice(0,MAX_ROWS);
     }else{allRows=await fetchAll(from);loadedRange=range}
+    await loadChats(from);
     rows=allRows.filter(function(r){return !isClick(r)});
     clicks=allRows.filter(isClick);
     var live=await sb.from('site_visits').select('visitor').gte('created_at',new Date(Date.now()-5*60000).toISOString()).limit(1000);
@@ -209,6 +227,72 @@ async function load(silent){
     else $('body').innerHTML='<div class="empty">تعذر التحميل: '+esc(e.message||e)+'</div>';
   }
   busy=false;
+}
+async function loadChats(from){
+  chats=null;chatErr=null;
+  try{
+    var out=[],step=1000;
+    for(var i=0;i<5000;i+=step){
+      var r=await sb.from('chat_logs').select('created_at,visitor,convo,page,role,text,dishes,handoff,mode,source,city,country_code')
+        .gte('created_at',from.toISOString()).order('created_at',{ascending:false}).range(i,i+step-1);
+      if(r.error)throw r.error;
+      out=out.concat(r.data||[]);
+      if(!r.data||r.data.length<step)break;
+    }
+    chats=out;
+  }catch(e){chatErr=e}
+}
+function chatCard(){
+  var h='<div class="card" id="chatCard"><h2>🤖 محادثات مساعد الشات</h2>';
+  if(chatErr){
+    if(/chat_logs|does not exist|schema cache|42P01|PGRST205/i.test((chatErr.code||'')+' '+(chatErr.message||'')))
+      return h+'<div class="setup"><b>لتفعيل حفظ المحادثات:</b> افتح Supabase ← <b>SQL Editor</b> ← الصق هذا الكود واضغط <b>Run</b>، وبعدها اضغط «تحديث».<pre id="chatSql">'+esc(CHAT_SQL)+'</pre><button class="btn primary" id="chatSqlCopy" type="button">📋 نسخ الكود</button></div></div>';
+    return h+'<div class="empty">تعذر تحميل المحادثات: '+esc(chatErr.message||chatErr)+'</div></div>';
+  }
+  var list=chats||[];
+  var by=new Map();
+  list.forEach(function(r){var k=r.convo||r.visitor;var c=by.get(k);if(!c){c={k:k,msgs:[],last:r.created_at,r:r};by.set(k,c)}c.msgs.push(r)});
+  var convs=Array.from(by.values());
+  convs.forEach(function(c){c.msgs.reverse();c.hand=c.msgs.some(function(m){return m.handoff});c.adds=c.msgs.filter(function(m){return m.role==='event'}).length;c.first=(c.msgs.filter(function(m){return m.role==='user'})[0]||{}).text||''});
+  var userMsgs=list.filter(function(m){return m.role==='user'}).length;
+  var hand=list.filter(function(m){return m.handoff}).length;
+  var adds=list.filter(function(m){return m.role==='event'}).length;
+  var ai=list.filter(function(m){return m.role==='bot'&&m.mode==='ai'}).length, bots=list.filter(function(m){return m.role==='bot'}).length;
+  h+='<div class="kpis" style="margin-bottom:10px">'+
+    '<div class="kpi"><div class="v">'+num(convs.length)+'</div><div class="l">محادثات</div></div>'+
+    '<div class="kpi"><div class="v">'+num(userMsgs)+'</div><div class="l">أسئلة الزباين</div></div>'+
+    '<div class="kpi"><div class="v">'+num(hand)+'</div><div class="l">حوّلناهم للاتصال/واتساب</div></div>'+
+    '<div class="kpi"><div class="v">'+num(adds)+'</div><div class="l">أطباق انضافت للسلة من الشات</div></div></div>';
+  if(bots)h+='<p class="conv">'+(ai===bots?'كل الردود من الذكاء الاصطناعي ✅':ai?num(ai)+' من '+num(bots)+' رد من الذكاء الاصطناعي، والباقي بحث عادي في المنيو':'⚠️ الردود حالياً بحث عادي في المنيو — الذكاء الاصطناعي مو مفعّل (شوف supabase/README-chat.md)')+'</p>';
+  var dish=new Map();
+  list.forEach(function(m){if(m.role!=='bot')return;(m.dishes||[]).forEach(function(d){var o=dish.get(d);if(!o){o={k:d,n:0,v:new Set()};dish.set(d,o)}o.n++;o.v.add(m.visitor)})});
+  var dl=Array.from(dish.values()).sort(function(a,b){return b.n-a.n});
+  var addl=count(function(m){return m.role==='event'&&m.dishes&&m.dishes[0]?m.dishes[0]:null},list);
+  h+='<div class="cols" style="margin-bottom:12px"><div><h3>🍽️ أكثر الأطباق اللي انعرضت في الشات</h3>'+bars(dl,function(o){return esc(o.k)})+'</div>'+
+    '<div><h3>🛒 انضافت للسلة من الشات</h3>'+bars(addl,function(o){return esc(o.k)})+'</div></div>';
+  h+='<h3>💬 آخر المحادثات (اضغط عشان تشوف المحادثة كاملة)</h3>';
+  if(!convs.length)return h+'<div class="empty">ما في محادثات في هذي الفترة لين الحين.</div></div>';
+  h+='<div class="chats">'+convs.slice(0,60).map(function(c){
+    var r=c.msgs.filter(function(m){return m.city||m.source})[0]||c.r,place=[r.city,r.country_code?flag(r.country_code):''].filter(Boolean).join(' ');
+    return '<details class="cv" data-k="'+esc(c.k)+'"><summary><span class="q">'+(c.hand?'<em class="tag">📞 تحويل</em>':'')+(c.adds?'<em class="tag ok">🛒 '+c.adds+'</em>':'')+esc(c.first||'—')+'</span><span class="t">'+esc(ago(c.last))+'</span>'+
+      '<small>'+num(c.msgs.filter(function(m){return m.role!=='event'}).length)+' رسالة'+(place?' · '+esc(place):'')+(r.source?' · '+esc(sourceName(r.source)):'')+'</small></summary><div class="tr">'+
+      c.msgs.map(function(m){
+        if(m.role==='event')return '<div class="ev">🛒 '+esc(m.text)+'</div>';
+        return '<div class="mb '+(m.role==='user'?'u':'b')+'">'+esc(m.text)+
+          ((m.dishes&&m.dishes.length&&m.role==='bot')?'<div class="ds">🍽️ '+m.dishes.map(esc).join('، ')+'</div>':'')+
+          (m.handoff?'<div class="ds">📞 ظهر له زر الواتساب والاتصال</div>':'')+
+          '<i>'+new Date(m.created_at).toLocaleTimeString('ar-AE',{hour:'numeric',minute:'2-digit'})+(m.role==='bot'&&m.mode==='local'?' · بحث عادي':'')+'</i></div>';
+      }).join('')+'</div></details>';
+  }).join('')+'</div>';
+  return h+'</div>';
+}
+function bindChatCard(){
+  var b=$('chatSqlCopy');if(!b)return;
+  b.onclick=function(){
+    (navigator.clipboard?navigator.clipboard.writeText(CHAT_SQL):Promise.reject()).then(function(){toast('✅ تم نسخ الكود')},function(){
+      var r=document.createRange();r.selectNodeContents($('chatSql'));var s=getSelection();s.removeAllRanges();s.addRange(r);toast('حدد الكود وانسخه');
+    });
+  };
 }
 function setup(){
   map=null;
@@ -279,6 +363,7 @@ function render(liveCount){
     '<p class="conv">من كل 100 زائر، <b>'+rate+'</b> تواصلوا معك (واتساب أو طلب أو اتصال) — '+num(contactPeople)+' من '+num(visitors)+' زائر</p>'+
     '<div class="cols"><div><h3>🧭 اللي تواصلوا، من وين جاو؟</h3>'+bars(count(function(r){return CONTACT[clickName(r)]?r.source:null},clicks),function(o){return esc(sourceName(o.k))})+'</div>'+
     '<div><h3>👆 كل الضغطات</h3>'+bars(count(clickName,clicks),function(o){return esc(CLICKS[o.k]||o.k)},12)+'</div></div></div>';
+  h+=chatCard();
   if(rows.length>=MAX_ROWS)h+='<p class="empty">يعرض آخر '+num(MAX_ROWS)+' زيارة فقط.</p>';
   h+='<div class="card"><h2>🗺️ أماكن الزوار على الخريطة</h2><div id="map" role="img" aria-label="خريطة أماكن الزوار"></div></div>';
   h+='<div class="card"><h2>📈 '+(range==='today'?'الزيارات حسب الساعة':'الزيارات حسب اليوم')+'</h2>'+days()+'</div>';
@@ -297,7 +382,10 @@ function render(liveCount){
     }).join('')+'</ul>':'<div class="empty">ما في زيارات في هذي الفترة لين الحين.</div>')+'</div>';
   if(map){try{mapView=[map.getCenter(),map.getZoom()]}catch(e){}map.remove();map=null}
   if(loadedRange!==range)mapView=null;
+  var openCv={};Array.prototype.forEach.call(document.querySelectorAll('details.cv[open]'),function(d){openCv[d.getAttribute('data-k')]=1});
   $('body').innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll('details.cv'),function(d){if(openCv[d.getAttribute('data-k')])d.open=true});
+  bindChatCard();
   drawMap();
 }
 function drawMap(){
