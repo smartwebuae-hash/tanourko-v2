@@ -614,6 +614,39 @@
   @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){.logo,.wrap>*,.links>.link-btn,.loyalty::after{animation:none!important}}
   @media (min-width:700px){.wrap{max-width:520px}}
+
+  /* ================= أزرار زجاجية ================= */
+  .link-btn,.hamad-ad-btn,.badge,.lang-switch,.story-btn{
+    background:linear-gradient(145deg,rgba(255,255,255,.24) 0%,rgba(255,255,255,.08) 45%,rgba(255,255,255,.04) 100%)!important;
+    backdrop-filter:blur(18px) saturate(170%);-webkit-backdrop-filter:blur(18px) saturate(170%);
+    border:1px solid rgba(255,255,255,.32);border-top-color:rgba(255,255,255,.6);border-left-color:rgba(255,255,255,.45)}
+  .link-btn{position:relative;overflow:hidden;isolation:isolate;
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.55),inset 0 -12px 24px rgba(255,255,255,.04),0 12px 30px rgba(20,8,2,.35)}
+  /* لمعة علوية مثل سطح الزجاج */
+  .link-btn::before{content:"";position:absolute;inset:0 0 55% 0;z-index:-1;pointer-events:none;border-radius:inherit;
+    background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0))}
+  /* انعكاس ضوء يمر على الزر */
+  .link-btn::after{content:"";position:absolute;top:0;bottom:0;width:60%;left:-80%;z-index:-1;pointer-events:none;
+    background:linear-gradient(105deg,transparent,rgba(255,255,255,.28),transparent);transform:skewX(-18deg);
+    animation:glassSweep 7s ease-in-out infinite;animation-delay:calc(var(--d,0) * 1s)}
+  .links>.link-btn:nth-child(2n)::after{--d:.6}.links>.link-btn:nth-child(3n)::after{--d:1.3}
+  @keyframes glassSweep{0%,70%{left:-80%}100%{left:130%}}
+  .link-btn:hover{border-color:rgba(255,255,255,.7);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.7),0 18px 36px rgba(20,8,2,.45),0 0 0 1px rgba(248,216,150,.25)}
+  .link-btn .icon{background:linear-gradient(145deg,rgba(255,255,255,.35),rgba(255,255,255,.08));
+    border:1px solid rgba(255,255,255,.5);box-shadow:inset 0 1px 1px rgba(255,255,255,.6),0 6px 14px rgba(20,8,2,.25);
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .link-btn .label{text-shadow:0 1px 6px rgba(0,0,0,.35)}
+
+  /* زر المنيو: زجاج ذهبي */
+  .links .link-btn:first-child{
+    background:linear-gradient(135deg,rgba(255,214,130,.85) 0%,rgba(248,216,150,.6) 50%,rgba(240,172,63,.8) 100%)!important;
+    border:1px solid rgba(255,240,200,.85);
+    box-shadow:inset 0 1px 2px rgba(255,255,255,.9),0 14px 34px rgba(240,172,63,.4),0 0 30px rgba(255,190,90,.25)}
+  .links .link-btn:first-child .label{text-shadow:none}
+  .links .link-btn:first-child .icon{background:rgba(255,255,255,.4);border-color:rgba(255,255,255,.7)}
+  .lang-btn.active{background:rgba(250,241,226,.95)}
+  @media (prefers-reduced-motion:reduce){.link-btn::after{animation:none;display:none}}
 </style>
 </head>
 <body>
