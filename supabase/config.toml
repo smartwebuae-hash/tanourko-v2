@@ -1,0 +1,3 @@
+# الموقع يتصل بالدالة بالمفتاح العام (publishable)، فما نطلب JWT
+[functions.tanourko-chat]
+verify_jwt = false
