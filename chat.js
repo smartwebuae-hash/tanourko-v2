@@ -160,15 +160,19 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
   function bubble(text, who) {
     var d = document.createElement('div'); d.className = 'tkc-b ' + who; d.textContent = text; M.appendChild(d); scroll(); return d;
   }
+  /* المدير محمود: رقمه للتحويل من الشات (نفس رقم MANAGER_WHATSAPP في menu.html) */
+  var BOSS = 'المدير محمود';
+  var BOSS_WA = C.MANAGER_WHATSAPP || WHATSAPP;
+  var BOSS_CALL = '0' + String(BOSS_WA).replace(/^971/, '');
   function waLink(q) {
-    var m = 'السلام عليكم، عندي استفسار من منيو تنوركو' + (q ? ':\n' + q : '');
-    return 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(m);
+    var m = 'السلام عليكم أستاذ محمود، عندي استفسار من منيو تنوركو' + (q ? ':\n' + q : '');
+    return 'https://wa.me/' + BOSS_WA + '?text=' + encodeURIComponent(m);
   }
   function contact(q) {
     var d = document.createElement('div'); d.className = 'tkc-c';
-    d.innerHTML = '<span>تقدر تتواصل مع المطعم مباشرة وبيخدمونك 🙏</span>' +
-      '<a class="wa" href="' + esc(waLink(q)) + '" target="_blank" rel="noopener">💬 كلمنا واتساب</a>' +
-      '<a class="cl" href="tel:' + esc(CALL) + '">☎️ اتصل ' + esc(CALL) + '</a>';
+    d.innerHTML = '<span>👤 <b>' + BOSS + '</b> · <b dir="ltr">' + esc(BOSS_CALL) + '</b><br>تواصل معه مباشرة وبيخدمك 🙏</span>' +
+      '<a class="wa" href="' + esc(waLink(q)) + '" target="_blank" rel="noopener">💬 واتساب ' + BOSS + '</a>' +
+      '<a class="cl" href="tel:' + esc(BOSS_CALL) + '">☎️ اتصل بـ' + BOSS + ' ' + esc(BOSS_CALL) + '</a>';
     M.appendChild(d); scroll();
   }
   function dishCards(ids) {
@@ -385,7 +389,10 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
     if (info.length) {
       return { reply: info.join('\n') + '\nتقدر تختار من المنيو وتضيف للسلة، وبعدها تختار توصيل أو استلام أو في المطعم وترسل الطلب واتساب.', dishes: [], handoff: /رسوم|كم ياخذ|كم يوصل|سعر التوصيل/.test(nq) };
     }
-    if (/موظف|انسان|احد يرد|اتصل|رقم|واتساب|موقع|لوكيشن|وين/.test(nq)) {
+    if (/موظف|انسان|احد يرد|مدير|مسوول|مسئول|اكلم|كلم|خدمه العملاء/.test(nq)) {
+      return { reply: 'أكيد 🙏 هذا رقم ' + BOSS + '، تقدر تتصل عليه أو تكلمه واتساب:', dishes: [], handoff: true };
+    }
+    if (/اتصل|رقم|واتساب|موقع|لوكيشن|وين/.test(nq)) {
       return { reply: 'هذا السؤال يجاوبك عليه فريق المطعم أفضل مني 🙏', dishes: [], handoff: true };
     }
     /* خدمة الطبخ: الزبون يجيب ذبيحته واحنا نطبخها */
