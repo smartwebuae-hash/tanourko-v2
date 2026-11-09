@@ -658,6 +658,27 @@
   .logo-hang .logo{display:block;margin:0 auto;width:min(200px,55vw);max-width:none;animation:none!important}
   @keyframes logoSwing{from{transform:rotate(5deg)}to{transform:rotate(-5deg)}}
   @media (prefers-reduced-motion:reduce){.logo-hang{animation:none!important}}
+
+  /* ================= أزرار زجاج برتقالي لامع (#ED7A30) ================= */
+  .link-btn,.links .link-btn:first-child{
+    background:
+      linear-gradient(180deg,rgba(255,255,255,.42) 0%,rgba(255,255,255,.12) 46%,rgba(255,255,255,0) 50%,rgba(0,0,0,.06) 100%),
+      linear-gradient(160deg,rgba(247,150,80,.92) 0%,rgba(237,122,48,.9) 55%,rgba(214,96,26,.92) 100%)!important;
+    border:1px solid rgba(255,225,190,.75)!important;border-bottom-color:rgba(160,60,10,.45)!important;
+    color:#fff!important;
+    box-shadow:inset 0 1.5px 0 rgba(255,255,255,.85),inset 0 -3px 8px rgba(150,50,0,.25),
+               0 10px 22px rgba(150,50,0,.38),0 0 0 1px rgba(255,255,255,.08)!important}
+  .link-btn::before{inset:2px 6px 52% 6px;border-radius:16px 16px 40% 40%/16px 16px 14px 14px;
+    background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,.05))}
+  .link-btn::after{background:linear-gradient(105deg,transparent,rgba(255,255,255,.55),transparent)}
+  .link-btn .label{text-shadow:0 1px 2px rgba(120,40,0,.55)!important}
+  .link-btn .icon{background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.95),rgba(255,240,225,.8) 60%,rgba(255,220,190,.7))!important;
+    border:1px solid rgba(255,255,255,.9)!important;box-shadow:0 3px 8px rgba(150,50,0,.35),inset 0 -2px 4px rgba(200,100,40,.25)!important}
+  .link-btn:hover{box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 16px 30px rgba(150,50,0,.45),0 0 18px rgba(255,170,90,.55)!important}
+  /* زر المنيو: نفس الزجاج البرتقالي مع إطار ذهبي يميزه */
+  .links .link-btn:first-child{border:2px solid #ffd27a!important;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 12px 28px rgba(150,50,0,.45),0 0 22px rgba(255,200,100,.55)!important}
+  .links .link-btn:first-child .arrow{color:#fff}
+  .link-btn .icon{color:#c4581a!important;text-shadow:none!important}
 </style>
 </head>
 <body>
