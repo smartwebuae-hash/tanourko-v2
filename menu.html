@@ -263,6 +263,8 @@ body.has-cart footer{padding-bottom:110px}
    ================================================================ */
 window.CONFIG = {
   WHATSAPP: "971500888917",
+  // رقم واتساب المدير اللي توصله طلبات مساعد الشات (نفس الصيغة: 971 بدون صفر)
+  MANAGER_WHATSAPP: "971500888917",
   CALL: "0500888917",
   // موقع المطعم (لحساب المسافة ووقت الوصول)
   REST_LAT: 24.160075,
@@ -640,6 +642,8 @@ menuEl.innerHTML='<p class="empty" style="display:block">جاري تحميل ا�
 loadMenu().then(m=>{render(m);window.TK_MENU=m;if(window.tkChatSetMenu)tkChatSetMenu(m)}); drawFab(false);
 /* ربط مساعد تنوركو (chat.js): صور الأطباق وإضافة الطبق للسلة من داخل الشات */
 window.tkImg=imgUrl;
+window.tkGetCart=()=>cart.map(c=>Object.assign({},c));
+window.tkClearCart=()=>{cart=[];saveCart();drawFab(false)};
 window.tkAddToCart=(it,i)=>{
   const z=it.sizes&&it.sizes[i], u=z?{label:z[0],val:+z[1]}:(it.txt?{label:'',val:null,txt:it.txt}:{label:'',val:+it.p});
   const key=it.n+'|'+u.label, ex=cart.find(c=>c.k===key);

@@ -59,6 +59,21 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
 .tkc-f input:focus{border-color:#E8692F}\
 .tkc-f button{border:0;background:#E8692F;color:#fff;border-radius:14px;padding:0 16px;font:inherit;font-weight:900;font-size:15px;cursor:pointer}\
 .tkc-f button:disabled{opacity:.5}\
+.tkc-o{align-self:stretch;background:#fff;border:1.5px solid #E8692F;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13.5px}\
+.tkc-o h5{margin:0;font-size:15px}\
+.tkc-o .ln{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed #F0E2D5;padding:3px 0}\
+.tkc-o .tot{display:flex;justify-content:space-between;font-weight:900;color:#E8692F;font-size:15px}\
+.tkc-o .ty{display:flex;gap:6px}\
+.tkc-o .ty button{flex:1;border:1.5px solid #EED7C5;background:#FFFBF6;border-radius:12px;padding:7px 4px;font:inherit;font-size:12.5px;font-weight:900;cursor:pointer;color:#2A1A0E}\
+.tkc-o .ty button.on{border-color:#E8692F;background:#FBEDE2;box-shadow:inset 0 0 0 1.5px #E8692F}\
+.tkc-o label{font-weight:800;font-size:12.5px;color:#8B735F;display:flex;flex-direction:column;gap:3px}\
+.tkc-o input,.tkc-o select,.tkc-o textarea{font:inherit;font-size:16px;border:1.5px solid #EED7C5;border-radius:10px;padding:7px 10px;background:#FFFBF6;color:#2A1A0E;width:100%;box-sizing:border-box}\
+.tkc-o .loc{border:1.5px dashed #E8692F;background:#fff;color:#E8692F;border-radius:10px;padding:8px;font:inherit;font-weight:900;cursor:pointer}\
+.tkc-o .loc.ok{border-style:solid;background:#EAF6EC;color:#3F8D52;border-color:#4FA463}\
+.tkc-o pre{margin:0;white-space:pre-wrap;background:#FBEDE2;border-radius:10px;padding:9px;font:inherit;font-size:12.5px;max-height:170px;overflow:auto}\
+.tkc-o .err{color:#C0392B;font-weight:800;min-height:0}\
+.tkc-o .go{border:0;background:#25D366;color:#fff;border-radius:12px;padding:11px;font:inherit;font-size:15px;font-weight:900;cursor:pointer}\
+.tkc-q button.ord{background:#E8692F;color:#fff;border-color:#E8692F}\
 .tkc-typ{align-self:flex-start;background:#fff;border:1px solid #F0E2D5;border-radius:16px;padding:10px 14px;display:flex;gap:4px}\
 .tkc-typ i{width:7px;height:7px;border-radius:50%;background:#E8692F;animation:tkcb 1s infinite}.tkc-typ i:nth-child(2){animation-delay:.15s}.tkc-typ i:nth-child(3){animation-delay:.3s}\
 @keyframes tkcb{50%{opacity:.25;transform:translateY(-3px)}}\
@@ -137,8 +152,8 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
     '<form class="tkc-f" id="tkcF"><input id="tkcI" autocomplete="off" maxlength="500" placeholder="اكتب سؤالك… مثلاً: كم سعر اللحم المخمود؟" aria-label="رسالتك"><button id="tkcS">إرسال</button></form>';
   document.body.appendChild(btn); document.body.appendChild(box);
   var M = box.querySelector('#tkcM'), I = box.querySelector('#tkcI'), S = box.querySelector('#tkcS'), Q = box.querySelector('#tkcQ');
-  var QUICK = ['شو تنصحني؟', 'أبغى أشوف الصواني والعروض', 'متى دوامكم؟', 'توصلون لمنطقتي؟', 'عندكم سلطات؟', 'وش عندكم حلويات؟', 'أبغى ذبيحة', 'أكلم موظف'];
-  Q.innerHTML = QUICK.map(function (q) { return '<button type="button">' + esc(q) + '</button>'; }).join('');
+  var QUICK = ['🧾 أكمل الطلب', 'شو تنصحني؟', 'أبغى أشوف الصواني والعروض', 'متى دوامكم؟', 'توصلون لمنطقتي؟', 'عندكم سلطات؟', 'وش عندكم حلويات؟', 'أبغى ذبيحة', 'أكلم موظف'];
+  Q.innerHTML = QUICK.map(function (q, i) { return '<button type="button"' + (i ? '' : ' class="ord"') + '>' + esc(q) + '</button>'; }).join('');
 
   var history = [], busy = false, opened = false;
   function scroll() { M.scrollTop = M.scrollHeight; }
@@ -208,6 +223,93 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
   Q.addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) send(b.textContent); });
   box.querySelector('#tkcF').addEventListener('submit', function (e) { e.preventDefault(); send(I.value); });
 
+
+  /* ---------------- إكمال الطلب: رسالة جاهزة للمدير على الواتساب ---------------- */
+  var MANAGER = C.MANAGER_WHATSAPP || WHATSAPP;
+  var REST = { lat: C.REST_LAT || 24.160075, lng: C.REST_LNG || 55.825521 };
+  function km(a, b) {
+    var R = 6371, r = function (x) { return x * Math.PI / 180; }, dl = r(b.lat - a.lat), dg = r(b.lng - a.lng);
+    var h = Math.pow(Math.sin(dl / 2), 2) + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.pow(Math.sin(dg / 2), 2);
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+  var TYPES = { delivery: '🚗 توصيل', pickup: '🛍️ استلام من المطعم', dinein: '🍽️ أكل في المطعم' };
+  function orderCard() {
+    var cart = window.tkGetCart ? window.tkGetCart() : [];
+    if (!cart.length) {
+      bubble('سلتك فاضية لين الحين 🛒\nاسألني عن أي طبق واضغط «أضف للسلة»، وبعدها اضغط «🧾 أكمل الطلب».', 'bot');
+      return;
+    }
+    var total = 0, txt = false;
+    cart.forEach(function (c) { if (c.v == null) txt = true; else total += c.v * c.q; });
+    var totText = total + ' درهم' + (txt ? ' + حسب الحجم' : '');
+    var name = ls('tk_name') || '';
+    var d = document.createElement('div'); d.className = 'tkc-o';
+    d.innerHTML = '<h5>🧾 ملخص طلبك</h5>' +
+      cart.map(function (c) {
+        return '<div class="ln"><span>' + c.q + ' × ' + esc(c.n) + (c.l ? ' (' + esc(c.l) + ')' : '') + '</span><span>' + (c.v == null ? esc(c.t) : c.q * c.v + ' درهم') + '</span></div>';
+      }).join('') +
+      '<div class="tot"><span>المجموع</span><span>' + esc(totText) + '</span></div>' +
+      '<div class="ty"><button type="button" data-t="delivery">🚗 توصيل</button><button type="button" data-t="pickup">🛍️ استلام</button><button type="button" data-t="dinein">🍽️ في المطعم</button></div>' +
+      '<label>الاسم<input data-f="name" autocomplete="name" placeholder="اسمك" value="' + esc(name) + '"></label>' +
+      '<div data-s="delivery" hidden><label>الإمارة / المنطقة والعنوان<input data-f="addr" placeholder="مثال: العين، الهيلي، فيلا 12"></label><button type="button" class="loc">📍 شارك موقعي (يسهّل على السائق)</button></div>' +
+      '<div data-s="pickup" hidden><label>وقت الاستلام<select data-f="time"><option>بأقرب وقت</option><option>بعد 15 دقيقة</option><option>بعد 30 دقيقة</option><option>بعد 45 دقيقة</option><option>بعد ساعة</option></select></label></div>' +
+      '<div data-s="dinein" hidden><label>القسم<select data-f="sec"><option>قسم العوائل</option><option>قسم الشباب</option></select></label><label>عدد الأشخاص<select data-f="ppl"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10+</option></select></label><label>وقت الوصول<select data-f="arr"><option>بأقرب وقت</option><option>بعد 15 دقيقة</option><option>بعد 30 دقيقة</option><option>بعد ساعة</option></select></label></div>' +
+      '<label>ملاحظات (اختياري)<textarea data-f="note" rows="2" placeholder="مثال: بدون حار، عيش أبيض…"></textarea></label>' +
+      '<label>👇 هذي الرسالة اللي بتوصل للمدير على الواتساب<pre></pre></label>' +
+      '<p class="err"></p><button type="button" class="go">💬 أرسل الطلب للمدير واتساب</button>';
+    M.appendChild(d); scroll();
+    var type = '', loc = null;
+    function f(k) { var e = d.querySelector('[data-f="' + k + '"]'); return e ? e.value.trim() : ''; }
+    function msg() {
+      var m = 'السلام عليكم، طلب جديد من مساعد تنوركو 🤖\n\n' + (TYPES[type] || '') + '\n\n🛒 الطلب:\n' +
+        cart.map(function (c) { return '• ' + c.q + ' × ' + c.n + (c.l ? ' (' + c.l + ')' : '') + ' — ' + (c.v == null ? c.t : c.q * c.v + ' درهم'); }).join('\n') +
+        '\n\n💰 المجموع: ' + totText + (type === 'delivery' ? ' (بدون رسوم التوصيل)' : '');
+      if (f('name')) m += '\n\n👤 الاسم: ' + f('name');
+      if (type === 'delivery') {
+        if (f('addr')) m += '\n🏠 العنوان: ' + f('addr');
+        if (loc) m += '\n📍 الموقع: https://maps.google.com/?q=' + loc.lat.toFixed(6) + ',' + loc.lng.toFixed(6) + '\n📏 يبعد عن المطعم ' + km(loc, REST).toFixed(1) + ' كم';
+      }
+      if (type === 'pickup') m += '\n⏰ وقت الاستلام: ' + f('time');
+      if (type === 'dinein') m += '\n🪑 ' + f('sec') + ' · 👥 ' + f('ppl') + ' أشخاص\n⏰ الوصول: ' + f('arr');
+      if (f('note')) m += '\n📝 ملاحظات: ' + f('note');
+      return m;
+    }
+    function draw() {
+      Array.prototype.forEach.call(d.querySelectorAll('.ty button'), function (b) { b.classList.toggle('on', b.getAttribute('data-t') === type); });
+      Array.prototype.forEach.call(d.querySelectorAll('[data-s]'), function (s) { s.hidden = s.getAttribute('data-s') !== type; });
+      d.querySelector('pre').textContent = msg();
+    }
+    d.addEventListener('input', draw); d.addEventListener('change', draw);
+    d.querySelector('.ty').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) { type = b.getAttribute('data-t'); d.querySelector('.err').textContent = ''; draw(); } });
+    d.querySelector('.loc').addEventListener('click', function () {
+      var b = this;
+      if (!navigator.geolocation) { d.querySelector('.err').textContent = 'جهازك ما يدعم تحديد الموقع، اكتب العنوان'; return; }
+      b.textContent = 'جاري تحديد موقعك…';
+      navigator.geolocation.getCurrentPosition(function (p) {
+        loc = { lat: p.coords.latitude, lng: p.coords.longitude };
+        b.classList.add('ok'); b.textContent = '✓ تم تحديد موقعك · يبعد ' + km(loc, REST).toFixed(1) + ' كم'; draw();
+      }, function () { b.textContent = '📍 شارك موقعي (يسهّل على السائق)'; d.querySelector('.err').textContent = 'ما قدرنا نحدد موقعك، اكتب العنوان'; },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
+    });
+    d.querySelector('.go').addEventListener('click', function () {
+      var err = d.querySelector('.err');
+      if (!type) { err.textContent = 'اختر: توصيل أو استلام أو في المطعم'; return; }
+      if (!f('name')) { err.textContent = 'اكتب اسمك'; return; }
+      if (type === 'delivery' && !f('addr') && !loc) { err.textContent = 'للتوصيل اكتب العنوان أو شارك موقعك'; return; }
+      ls('tk_name', f('name'));
+      var m = msg();
+      try { window.tkTrack && window.tkTrack('order'); } catch (e) {}
+      log('event', 'أرسل طلب للمدير (' + (TYPES[type] || '') + ') — ' + totText + '\n' + m, { dishes: cart.map(function (c) { return c.n; }) });
+      window.open('https://wa.me/' + MANAGER + '?text=' + encodeURIComponent(m), '_blank');
+      if (window.tkClearCart) window.tkClearCart();
+      d.querySelector('.go').disabled = true; d.querySelector('.go').textContent = '✓ تم فتح الواتساب';
+      bubble('تمام ✅ انفتح لك الواتساب والرسالة جاهزة، اضغط «إرسال» هناك عشان يوصل الطلب للمدير.\nوإذا ما انفتح الواتساب، اضغط الزر مرة ثانية أو كلمنا على ' + CALL + '.', 'bot');
+      d.querySelector('.go').disabled = false; d.querySelector('.go').textContent = '💬 أرسل الطلب مرة ثانية';
+    });
+    draw();
+  }
+  var ORDER_RE = /اكمل الطلب|كمل الطلب|اكمال الطلب|ارسل الطلب|اثبت الطلب|ثبت الطلب|خلصت|اطلب الحين|ابي اطلب|ابغي اطلب|ابا اطلب|ودي اطلب|اريد اطلب|ابغا اطلب/;
+
   /* ---------------- الرد المحلي (بدون ذكاء اصطناعي) ---------------- */
   var STOP = ' كم سعر بكم ابغي ابغا ابي ابا عندكم عندك في فيه هل شو وش ايش اريد اطلب طلب ممكن لو سمحت من على مع حق الله '.split(' ');
   function findItems(q) {
@@ -231,6 +333,7 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
   }
   function localReply(q) {
     var nq = norm(q);
+    if (ORDER_RE.test(nq)) return { reply: 'حياك 🙌 عبّ التفاصيل تحت، وبتطلع لك رسالة جاهزة فيها كل طلبك ترسلها للمدير على الواتساب:', dishes: [], handoff: false, order: true };
     var info = [];
     if (/دوام|يفتح|تفتح|مفتوح|تسكر|يسكر|متي|الساعه|ساعات/.test(nq)) info.push('🕚 دوامنا يومياً من 11 الصبح لين 12 بالليل.');
     if (/توصيل|توصلون|يوصل|توصل|دليفري/.test(nq)) info.push('🚗 نوصّل لجميع مناطق الدولة. رسوم التوصيل ووقته حسب منطقتك، فريق المطعم يؤكدها لك على الواتساب.');
@@ -286,14 +389,16 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
     history.push({ role: 'user', content: cut(text, 500) });
     log('user', text);
     typing(true);
-    var p = ITEMS.length ? ask(text) : Promise.reject(new Error('no menu'));
+    /* «أكمل الطلب» ما يحتاج ذكاء اصطناعي: النموذج يطلع فوراً */
+    var p = ITEMS.length && !ORDER_RE.test(norm(text)) ? ask(text) : Promise.reject(new Error('local'));
     p.catch(function () { var r = localReply(text); r.mode = 'local'; return r; }).then(function (r) {
       typing(false);
       var reply = String(r.reply || '').trim() || 'تفضل 👇';
       bubble(reply, 'bot');
       var names = dishCards((r.dishes || []).slice(0, 8));
       if (r.handoff) contact(text);
-      history.push({ role: 'assistant', content: cut(reply + (names.length ? '\n[عرضت: ' + names.join('، ') + ']' : ''), 1200) });
+      if (r.order) orderCard();
+      history.push({ role: 'assistant', content: cut(reply + (names.length ? '\n[عرضت: ' + names.join('، ') + ']' : '') + (r.order ? '\n[عرضت نموذج إكمال الطلب]' : ''), 1200) });
       log('bot', reply, { dishes: names, handoff: !!r.handoff, mode: r.mode });
       busy = false; S.disabled = false; I.focus();
     });
