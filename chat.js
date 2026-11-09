@@ -251,6 +251,7 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
       '<div class="tot"><span>المجموع</span><span>' + esc(totText) + '</span></div>' +
       '<div class="ty"><button type="button" data-t="delivery">🚗 توصيل</button><button type="button" data-t="pickup">🛍️ استلام</button><button type="button" data-t="dinein">🍽️ في المطعم</button></div>' +
       '<label>الاسم<input data-f="name" autocomplete="name" placeholder="اسمك" value="' + esc(name) + '"></label>' +
+      '<label>رقم الهاتف<input data-f="phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" style="text-align:right" placeholder="05xxxxxxxx" value="' + esc(ls('tk_phone') || '') + '"></label>' +
       '<div data-s="delivery" hidden><label>الإمارة / المنطقة والعنوان<input data-f="addr" placeholder="مثال: العين، الهيلي، فيلا 12"></label><button type="button" class="loc">📍 شارك موقعي (يسهّل على السائق)</button></div>' +
       '<div data-s="pickup" hidden><label>وقت الاستلام<select data-f="time"><option>بأقرب وقت</option><option>بعد 15 دقيقة</option><option>بعد 30 دقيقة</option><option>بعد 45 دقيقة</option><option>بعد ساعة</option></select></label></div>' +
       '<div data-s="dinein" hidden><label>القسم<select data-f="sec"><option>قسم العوائل</option><option>قسم الشباب</option></select></label><label>عدد الأشخاص<select data-f="ppl"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10+</option></select></label><label>وقت الوصول<select data-f="arr"><option>بأقرب وقت</option><option>بعد 15 دقيقة</option><option>بعد 30 دقيقة</option><option>بعد ساعة</option></select></label></div>' +
@@ -259,12 +260,13 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
       '<p class="err"></p><button type="button" class="go">💬 أرسل الطلب للمدير واتساب</button>';
     M.appendChild(d); scroll();
     var type = '', loc = null;
+    function phone() { return window.tkPhone ? window.tkPhone(f('phone')) : f('phone').replace(/\D/g, ''); }
     function f(k) { var e = d.querySelector('[data-f="' + k + '"]'); return e ? e.value.trim() : ''; }
     function msg() {
       var m = 'السلام عليكم، طلب جديد من مساعد تنوركو 🤖\n\n' + (TYPES[type] || '') + '\n\n🛒 الطلب:\n' +
         cart.map(function (c) { return '• ' + c.q + ' × ' + c.n + (c.l ? ' (' + c.l + ')' : '') + ' — ' + (c.v == null ? c.t : c.q * c.v + ' درهم'); }).join('\n') +
         '\n\n💰 المجموع: ' + totText + (type === 'delivery' ? ' (بدون رسوم التوصيل)' : '');
-      if (f('name')) m += '\n\n👤 الاسم: ' + f('name');
+      m += '\n\n👤 الاسم: ' + (f('name') || '—') + '\n📱 رقم الهاتف: ' + (phone() || f('phone') || 'نفس رقم الواتساب');
       if (type === 'delivery') {
         if (f('addr')) m += '\n🏠 العنوان: ' + f('addr');
         if (loc) m += '\n📍 الموقع: https://maps.google.com/?q=' + loc.lat.toFixed(6) + ',' + loc.lng.toFixed(6) + '\n📏 يبعد عن المطعم ' + km(loc, REST).toFixed(1) + ' كم';
@@ -296,7 +298,7 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
       if (!type) { err.textContent = 'اختر: توصيل أو استلام أو في المطعم'; return; }
       if (!f('name')) { err.textContent = 'اكتب اسمك'; return; }
       if (type === 'delivery' && !f('addr') && !loc) { err.textContent = 'للتوصيل اكتب العنوان أو شارك موقعك'; return; }
-      ls('tk_name', f('name'));
+      ls('tk_name', f('name')); if (phone() || f('phone')) ls('tk_phone', phone() || f('phone'));
       var m = msg();
       try { window.tkTrack && window.tkTrack('order'); } catch (e) {}
       log('event', 'أرسل طلب للمدير (' + (TYPES[type] || '') + ') — ' + totText + '\n' + m, { dishes: cart.map(function (c) { return c.n; }) });
@@ -312,12 +314,19 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
 
   /* ---------------- الرد المحلي (بدون ذكاء اصطناعي) ---------------- */
   var STOP = ' كم سعر بكم ابغي ابغا ابي ابا عندكم عندك في فيه هل شو وش ايش اريد اطلب طلب ممكن لو سمحت من على مع حق الله '.split(' ');
-  function findItems(q) {
+  function topPrice(it) {
+    if (it.sizes && it.sizes.length) return Math.max.apply(null, it.sizes.map(function (z) { return +z[1] || 0; }));
+    return +it.p || 0;
+  }
+  function desc(ids) { return ids.slice().sort(function (a, b) { return topPrice(ITEMS[b].it) - topPrice(ITEMS[a].it); }); }
+  /* البحث باسم الطبق؛ عند التساوي الأغلى أولاً. «الطبخ» ما يطلع إلا إذا سأل عن خدمة الطبخ */
+  function findItems(q, allowTabkh) {
     var nq = norm(q), words = nq.split(' ').filter(function (w) { return w.length > 1 && STOP.indexOf(w) < 0; });
-    if (!words.length) return [];
+    if (!words.length) return { ids: [], best: 0 };
     var scored = ITEMS.map(function (x) {
       var s = 0;
-      if (x.nn && nq.indexOf(x.nn) >= 0) s += 10;
+      if (!allowTabkh && x.sec === 'الطبخ') return { x: x, s: 0 };
+      if (x.nn && (' ' + nq + ' ').indexOf(' ' + x.nn + ' ') >= 0) s += 10;
       words.forEach(function (w) {
         var w2 = w.replace(/^ال/, '');
         if (w2.length < 2) return;
@@ -325,11 +334,45 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
         else if (norm(x.sec).indexOf(w2) >= 0) s += 1;
       });
       return { x: x, s: s };
-    }).filter(function (o) { return o.s > 1; }).sort(function (a, b) { return b.s - a.s; });
-    return scored.slice(0, 6).map(function (o) { return o.x.id; });
+    }).filter(function (o) { return o.s > 1; }).sort(function (a, b) { return b.s - a.s || topPrice(b.x.it) - topPrice(a.x.it); });
+    return { ids: scored.slice(0, 6).map(function (o) { return o.x.id; }), best: scored.length ? scored[0].s : 0 };
   }
+  /* كل أطباق القسم من الأغلى للأرخص */
   function bySec(re, n) {
-    return ITEMS.filter(function (x) { return re.test(x.sec); }).slice(0, n).map(function (x) { return x.id; });
+    return desc(ITEMS.filter(function (x) { return re.test(x.sec); }).map(function (x) { return x.id; })).slice(0, n);
+  }
+  function salads(n) {
+    return desc(ITEMS.filter(function (x) { return /سلط|تبول/.test(x.n) && !/دجاج|لحم/.test(x.n); }).map(function (x) { return x.id; })).slice(0, n);
+  }
+  /* الأفضل والأغلى: أغلى طبق من كل صنف بترتيب الوجبة */
+  var BEST_SECS = [/الاطباق الرئيسيه|الأطباق الرئيسية/, /الاسماك|الأسماك/, /الدجاج/, /الصالونه|الصالونة/, /المقبلات البارده|المقبلات الباردة/, /المقبلات الساخنه|المقبلات الساخنة/, /العصائر/, /الحلويات/];
+  function best() {
+    var out = [];
+    BEST_SECS.forEach(function (re) { var id = /البارد/.test(re.source) ? salads(1)[0] : bySec(re, 1)[0]; if (id != null) out.push(id); });
+    return out;
+  }
+  function upsell(ids) {
+    var extra = [salads(1)[0], bySec(/العصائر/, 1)[0], bySec(/الحلويات/, 1)[0]];
+    return ids.concat(extra.filter(function (i) { return i != null && ids.indexOf(i) < 0; }));
+  }
+  /* الأصناف حسب المكوّن من كل الأقسام، والأغلى أولاً (ما يدخل فيها «الطبخ» ولا الإضافات) */
+  var MEAT = /(^|[ (])(ال)?لحم|حوار|خروف|تيس|ذبيح/, FISH = /سمك|سيباس|سبريم|سلمون|كنعد|روبيان|عوال|شعري|جشيد/;
+  var GROUPS = [
+    { q: /عروض|العرض|صواني|صينيه/, m: function (x) { return /العروض/.test(x.sec); }, t: 'هذي كل عروضنا 🔥 تكفي 5–6 أشخاص' },
+    { q: /(^| )(ب|و|بال|وال|ال)?لحم|لحوم|حوار/, m: function (x) { return MEAT.test(x.n) && !/ذبائح/.test(x.sec); }, t: 'أفخم وأفضل اللحوم عندنا 🍖', top: true },
+    { q: /دجاج|دياي|فراخ/, m: function (x) { return /دجاج/.test(x.n) || /الدجاج/.test(x.sec); }, t: 'كل أطباق الدجاج عندنا 🍗' },
+    { q: /سمك|سمج|اسماك|بحري|بحريات|روبيان|ربيان|هامور|سلمون/, m: function (x) { return FISH.test(x.n) || /الأسماك|الاسماك/.test(x.sec); }, t: 'أفضل أطباق السمك والبحريات 🐟' },
+    { q: /صالون/, m: function (x) { return /صالون/.test(x.n) && !/ذبائح/.test(x.sec); }, t: 'الصالونة 🍲' },
+    { q: /مقبلات|مقبل|محاشي|محشي|ورق عنب|سمبوس/, m: function (x) { return /المقبلات/.test(x.sec); }, t: 'المقبلات الباردة والساخنة 👇' },
+    { q: /حلو|حلي|حلا|كنافه|حلويات/, m: function (x) { return /الحلويات/.test(x.sec) || (/الحرارات|طلبات مسبقه|طلبات مسبقة/.test(x.sec) && /عصيد|خبيص|محلي|قيمات|خنفروش|بلاليط|جباب/.test(x.n)); }, t: 'حلوياتنا 🍰 (الحرارات والطلبات المسبقة تنحجز قبل)' },
+    { q: /عصير|عصاير|ميلك|شيك|مشروب|مشاريب|بارد/, m: function (x) { return /العصائر|المشروبات/.test(x.sec); }, t: 'العصائر والمشروبات 🥤' },
+    { q: /حراره|حرارات|هريس|ثريد|مرقوق/, m: function (x) { return /الحرارات/.test(x.sec); }, t: 'الحرارات (الحجز قبل 20 ساعة) 🍯' },
+  ];
+  function group(g) {
+    var ids = desc(ITEMS.filter(function (x) { return x.sec !== 'الطبخ' && !/إضافات/.test(x.sec) && g.m(x); }).map(function (x) { return x.id; }));
+    /* مع اللحوم نبدأ بأفخم ذبيحة خروف وتيس */
+    if (g.top) ids = bySec(/ذبائح خروف/, 1).concat(bySec(/ذبائح تيس/, 1), ids);
+    return ids.slice(0, 14);
   }
   function localReply(q) {
     var nq = norm(q);
@@ -345,21 +388,29 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
     if (/موظف|انسان|احد يرد|اتصل|رقم|واتساب|موقع|لوكيشن|وين/.test(nq)) {
       return { reply: 'هذا السؤال يجاوبك عليه فريق المطعم أفضل مني 🙏', dishes: [], handoff: true };
     }
-    var ids = findItems(q);
-    if (/سلط/.test(nq) && !ids.length) ids = bySec(/سلط|مقبلات/, 6);
-    if (/حلو|حلى/.test(nq) && !ids.length) ids = bySec(/حلو/, 6);
-    if (/عرض|عروض|صيني/.test(nq) && !ids.length) ids = bySec(/عروض/, 6);
-    if (/مشروب|عصير|عصاير/.test(nq) && !ids.length) ids = bySec(/عصائر|مشروب/, 6);
-    if (/ذبيح|خروف|تيس/.test(nq) && !ids.length) ids = bySec(/ذبائح/, 6);
-    if (/تنصح|اقتراح|اقترح|شو الزين|الاكثر|افضل|مميز/.test(nq) && !ids.length) {
-      ids = bySec(/رئيسي/, 2).concat(bySec(/سلط|مقبلات/, 1), bySec(/عصائر/, 1), bySec(/حلو/, 1));
-      return { reply: 'أنصحك بهذي التشكيلة 😋 طبق رئيسي، ومعه سلطة وعصير، وتختمها بحلى:', dishes: ids, handoff: false };
+    /* خدمة الطبخ: الزبون يجيب ذبيحته واحنا نطبخها */
+    if (/(^| )(ال)?طبخ|تطبخ|يطبخ|نطبخ|اطبخ/.test(nq)) {
+      return { reply: 'خدمة الطبخ 👨‍🍳: تجيب ذبيحتك واحنا نطبخها لك بالطريقة اللي تبغاها (بخار، تنور، غوزي، مشوي، مخمود، مطفي، ثريد، مجبوس).\nالحجز قبل 20 ساعة، وهذي أسعار الطبخ فقط:\n\nوإذا تبغى الذبيحة من عندنا مع الطبخ، اسألني عن «الذبائح».', dishes: bySec(/^الطبخ$/, 12), handoff: false };
     }
-    if (ids.length) {
-      var x = ITEMS[ids[0]];
-      var extra = bySec(/سلط|مقبلات/, 1).concat(bySec(/عصائر|مشروب/, 1)).filter(function (i) { return ids.indexOf(i) < 0; });
-      var main = /رئيسي|عروض|ذبائح/.test(x.sec);
-      return { reply: 'هذا اللي لقيته لك في المنيو 👇' + (main ? '\nويمشي معه حلو سلطة ومشروب:' : ''), dishes: main ? ids.slice(0, 3).concat(extra) : ids, handoff: false };
+    /* الذبائح من عندنا (مو الطبخ) */
+    if (/ذبيح|ذبايح|ذبائح|خروف|خرفان|نعيمي|تيس|تيوس/.test(nq)) {
+      var kh = /خروف|خرفان|نعيمي/.test(nq), ts = /تيس|تيوس/.test(nq);
+      var ids = (kh || !ts ? bySec(/ذبائح خروف/, 9) : []).concat(ts || !kh ? bySec(/ذبائح تيس/, 9) : []);
+      return { reply: 'ذبائحنا 🐑 تشمل الذبيحة والطبخ، والحجز قبل 20 ساعة:' + (kh || ts ? '' : '\nخروف نعيمي وتيس، بكل طرق الطبخ 👇') + '\n\nتقدر تضيف معها صحن فواكه طازجة (100 درهم) أو كنافة لايف أمام ضيوفك (500 درهم).', dishes: ids, handoff: false };
+    }
+    var f = findItems(q, false), strong = f.best >= 4;
+    if (!strong && /سلط/.test(nq)) return { reply: 'سلطاتنا 🥗 (من الأفضل للأقل)', dishes: salads(12), handoff: false };
+    if (!strong) {
+      for (var i = 0; i < GROUPS.length; i++) {
+        if (GROUPS[i].q.test(nq)) return { reply: GROUPS[i].t + ' — من الأفضل للأقل:' + (GROUPS[i].top ? '\nوللذبائح كاملة اسألني عن «الذبائح» 🐑' : '') + '\n\nويكمّل طلبك سلطة وعصير، اسألني عنهم 😋', dishes: group(GROUPS[i]), handoff: false };
+      }
+    }
+    if (f.ids.length) {
+      var x = ITEMS[f.ids[0]], main = /رئيسي|الدجاج|الاسماك|الأسماك|الصالون|العروض/.test(x.sec);
+      return { reply: 'هذا اللي لقيته لك في المنيو 👇' + (main ? '\nويكمّل طلبك أحلى سلطة وعصير وحلى عندنا 😋' : ''), dishes: main ? upsell(f.ids.slice(0, 3)) : f.ids, handoff: false };
+    }
+    if (/تنصح|اقتراح|اقترح|الزين|الاكثر|افضل|احسن|مميز|اغلي|فخم|اطباق|اكلات|عندكم|المنيو|منيو|جوعان|اكل/.test(nq)) {
+      return { reply: 'هذا أفضل وأفخم شي عندنا من كل صنف 👌 رئيسي، سمك، دجاج، صالونة، سلطة، مقبلات، عصير وحلى:\n\nوإذا كنتوا جماعة، اسألني عن «العروض» 🔥', dishes: best(), handoff: false };
     }
     return { reply: 'ما لقيت جواب أكيد لسؤالك، بس فريق المطعم يقدر يساعدك فوراً 🙏', dishes: [], handoff: true };
   }
@@ -395,7 +446,7 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
       typing(false);
       var reply = String(r.reply || '').trim() || 'تفضل 👇';
       bubble(reply, 'bot');
-      var names = dishCards((r.dishes || []).slice(0, 8));
+      var names = dishCards((r.dishes || []).slice(0, 18));
       if (r.handoff) contact(text);
       if (r.order) orderCard();
       history.push({ role: 'assistant', content: cut(reply + (names.length ? '\n[عرضت: ' + names.join('، ') + ']' : '') + (r.order ? '\n[عرضت نموذج إكمال الطلب]' : ''), 1200) });
