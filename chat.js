@@ -251,7 +251,7 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
       '<div class="tot"><span>المجموع</span><span>' + esc(totText) + '</span></div>' +
       '<div class="ty"><button type="button" data-t="delivery">🚗 توصيل</button><button type="button" data-t="pickup">🛍️ استلام</button><button type="button" data-t="dinein">🍽️ في المطعم</button></div>' +
       '<label>الاسم<input data-f="name" autocomplete="name" placeholder="اسمك" value="' + esc(name) + '"></label>' +
-      '<label>رقم الهاتف (مطلوب)<input data-f="phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" style="text-align:right" placeholder="05xxxxxxxx" value="' + esc(ls('tk_phone') || '') + '"></label>' +
+      '<label>رقم الهاتف<input data-f="phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" style="text-align:right" placeholder="05xxxxxxxx" value="' + esc(ls('tk_phone') || '') + '"></label>' +
       '<div data-s="delivery" hidden><label>الإمارة / المنطقة والعنوان<input data-f="addr" placeholder="مثال: العين، الهيلي، فيلا 12"></label><button type="button" class="loc">📍 شارك موقعي (يسهّل على السائق)</button></div>' +
       '<div data-s="pickup" hidden><label>وقت الاستلام<select data-f="time"><option>بأقرب وقت</option><option>بعد 15 دقيقة</option><option>بعد 30 دقيقة</option><option>بعد 45 دقيقة</option><option>بعد ساعة</option></select></label></div>' +
       '<div data-s="dinein" hidden><label>القسم<select data-f="sec"><option>قسم العوائل</option><option>قسم الشباب</option></select></label><label>عدد الأشخاص<select data-f="ppl"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10+</option></select></label><label>وقت الوصول<select data-f="arr"><option>بأقرب وقت</option><option>بعد 15 دقيقة</option><option>بعد 30 دقيقة</option><option>بعد ساعة</option></select></label></div>' +
@@ -266,7 +266,7 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
       var m = 'السلام عليكم، طلب جديد من مساعد تنوركو 🤖\n\n' + (TYPES[type] || '') + '\n\n🛒 الطلب:\n' +
         cart.map(function (c) { return '• ' + c.q + ' × ' + c.n + (c.l ? ' (' + c.l + ')' : '') + ' — ' + (c.v == null ? c.t : c.q * c.v + ' درهم'); }).join('\n') +
         '\n\n💰 المجموع: ' + totText + (type === 'delivery' ? ' (بدون رسوم التوصيل)' : '');
-      m += '\n\n👤 الاسم: ' + (f('name') || '—') + '\n📱 رقم الهاتف: ' + (phone() || f('phone') || '—');
+      m += '\n\n👤 الاسم: ' + (f('name') || '—') + '\n📱 رقم الهاتف: ' + (phone() || f('phone') || 'نفس رقم الواتساب');
       if (type === 'delivery') {
         if (f('addr')) m += '\n🏠 العنوان: ' + f('addr');
         if (loc) m += '\n📍 الموقع: https://maps.google.com/?q=' + loc.lat.toFixed(6) + ',' + loc.lng.toFixed(6) + '\n📏 يبعد عن المطعم ' + km(loc, REST).toFixed(1) + ' كم';
@@ -297,9 +297,8 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
       var err = d.querySelector('.err');
       if (!type) { err.textContent = 'اختر: توصيل أو استلام أو في المطعم'; return; }
       if (!f('name')) { err.textContent = 'اكتب اسمك'; return; }
-      if (!phone()) { err.textContent = 'اكتب رقم هاتفك صحيح (مثال: 0501234567)'; d.querySelector('[data-f="phone"]').focus(); return; }
       if (type === 'delivery' && !f('addr') && !loc) { err.textContent = 'للتوصيل اكتب العنوان أو شارك موقعك'; return; }
-      ls('tk_name', f('name')); ls('tk_phone', phone());
+      ls('tk_name', f('name')); if (phone() || f('phone')) ls('tk_phone', phone() || f('phone'));
       var m = msg();
       try { window.tkTrack && window.tkTrack('order'); } catch (e) {}
       log('event', 'أرسل طلب للمدير (' + (TYPES[type] || '') + ') — ' + totText + '\n' + m, { dishes: cart.map(function (c) { return c.n; }) });
