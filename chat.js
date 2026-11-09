@@ -137,7 +137,7 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
     '<form class="tkc-f" id="tkcF"><input id="tkcI" autocomplete="off" maxlength="500" placeholder="اكتب سؤالك… مثلاً: كم سعر اللحم المخمود؟" aria-label="رسالتك"><button id="tkcS">إرسال</button></form>';
   document.body.appendChild(btn); document.body.appendChild(box);
   var M = box.querySelector('#tkcM'), I = box.querySelector('#tkcI'), S = box.querySelector('#tkcS'), Q = box.querySelector('#tkcQ');
-  var QUICK = ['شو تنصحني؟', 'أبغى أشوف الصواني والعروض', 'عندكم سلطات؟', 'وش عندكم حلويات؟', 'أبغى ذبيحة', 'أكلم موظف'];
+  var QUICK = ['شو تنصحني؟', 'أبغى أشوف الصواني والعروض', 'متى دوامكم؟', 'توصلون لمنطقتي؟', 'عندكم سلطات؟', 'وش عندكم حلويات؟', 'أبغى ذبيحة', 'أكلم موظف'];
   Q.innerHTML = QUICK.map(function (q) { return '<button type="button">' + esc(q) + '</button>'; }).join('');
 
   var history = [], busy = false, opened = false;
@@ -231,7 +231,15 @@ body.has-cart .tkc-btn span.t{display:none}body.has-cart .tkc-btn{padding:8px}\
   }
   function localReply(q) {
     var nq = norm(q);
-    if (/موظف|انسان|احد يرد|اتصل|رقم|واتساب|توصيل|دوام|يفتح|تفتح|مفتوح|موقع|لوكيشن|وين/.test(nq)) {
+    var info = [];
+    if (/دوام|يفتح|تفتح|مفتوح|تسكر|يسكر|متي|الساعه|ساعات/.test(nq)) info.push('🕚 دوامنا يومياً من 11 الصبح لين 12 بالليل.');
+    if (/توصيل|توصلون|يوصل|توصل|دليفري/.test(nq)) info.push('🚗 نوصّل لجميع مناطق الدولة. رسوم التوصيل ووقته حسب منطقتك، فريق المطعم يؤكدها لك على الواتساب.');
+    if (/استلام|استلم|اخذ|تيك اوي/.test(nq)) info.push('🛍️ تقدر تطلب وتستلم من المطعم.');
+    if (/عوايل|عائل|عوائل|شباب|جلس|داخل المطعم|اكل في المطعم|قسم|طاوله/.test(nq)) info.push('🍽️ عندنا أكل داخل المطعم، فيه قسم للعوائل وقسم للشباب.');
+    if (info.length) {
+      return { reply: info.join('\n') + '\nتقدر تختار من المنيو وتضيف للسلة، وبعدها تختار توصيل أو استلام أو في المطعم وترسل الطلب واتساب.', dishes: [], handoff: /رسوم|كم ياخذ|كم يوصل|سعر التوصيل/.test(nq) };
+    }
+    if (/موظف|انسان|احد يرد|اتصل|رقم|واتساب|موقع|لوكيشن|وين/.test(nq)) {
       return { reply: 'هذا السؤال يجاوبك عليه فريق المطعم أفضل مني 🙏', dishes: [], handoff: true };
     }
     var ids = findItems(q);
