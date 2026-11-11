@@ -633,6 +633,7 @@ async function boot(){
   setSync(true);flushQueue();
   setKiosk(lsGet(KIOSK_KEY,false));
   renderKiosk();
+  if(/^#(manage|today|report|log|staff)$/.test(location.hash)&&!lsGet(KIOSK_KEY,false))showTab(location.hash==='#manage'?'today':location.hash.slice(1));
   setInterval(function(){flushQueue();renderKiosk();if(tab==='today')renderToday()},60000);
   window.addEventListener('online',flushQueue);
 }
