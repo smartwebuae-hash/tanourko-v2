@@ -192,11 +192,11 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 60px}
 @media print{
   body.print-imgs>*:not(#printBox){display:none !important}
   body.print-imgs #printBox{display:block !important}
-  #printBox img{display:block;width:210mm;height:297mm;object-fit:contain;break-after:page;page-break-after:always}
+  #printBox img{display:block;width:148mm;height:210mm;object-fit:contain;break-after:page;page-break-after:always}
   #printBox img:last-child{break-after:auto;page-break-after:auto}
 }
 @media print{
-  @page{size:A4;margin:0}
+  @page{size:A5;margin:0}
   html,body{background:#fff}
   .top,main,.ebar,.side,.addln,.toast,.login,.scrim{display:none !important}
   .editor{position:static;background:#fff;overflow:visible}
@@ -590,7 +590,7 @@ function waText(c){
 }
 
 
-/* ============ PDF: كل عقد في صفحة A4 وحدة (رسم مباشر على canvas) ============ */
+/* ============ PDF: كل عقد في صفحة A5 (نصف A4) وحدة (رسم مباشر على canvas) ============ */
 var IMG={};
 function loadImg(src){
   if(IMG[src])return IMG[src];
@@ -603,13 +603,14 @@ async function pdfAssets(){
   return {logo:r[0],stamp:r[1],sign:r[2]};
 }
 function drawContract(cv,c,A){
-  var W=794,H=1123,K=2,FAM='Tajawal, "Segoe UI", Tahoma, sans-serif',PEN='#1f3b9c',RED='#c0161d';
+  /* نصف ورقة A4 = A5 (148×210 مم) — 559×794 نقطة، دقة ×3 للطباعة */
+  var W=559,H=794,K=3,M=30,FAM='Tajawal, "Segoe UI", Tahoma, sans-serif',SER='Georgia, "Times New Roman", serif',PEN='#1f3b9c',RED='#c0161d';
   cv.width=W*K;cv.height=H*K;
   var x=cv.getContext('2d');
   function F(w,s,fam){x.font=w+' '+s+'px '+(fam||FAM)}
   function T(t,px,py,al,col,dir){x.direction=dir||'rtl';x.textAlign=al;x.fillStyle=col||'#111';x.fillText(t,px,py)}
-  function fit(t,w,s,wt,fam){var z=s;F(wt,z,fam);while(z>9&&x.measureText(t).width>w){z-=.5;F(wt,z,fam)}return z}
-  function dots(a,b,y){x.save();x.strokeStyle='#8a8a8a';x.lineWidth=1.2;x.setLineDash([1.3,2.7]);x.beginPath();x.moveTo(a,y);x.lineTo(b,y);x.stroke();x.restore()}
+  function fit(t,w,s,wt,fam){var z=s;F(wt,z,fam);while(z>7&&x.measureText(t).width>w){z-=.25;F(wt,z,fam)}return z}
+  function dots(a,b,y){x.save();x.strokeStyle='#8a8a8a';x.lineWidth=.9;x.setLineDash([1,2.1]);x.beginPath();x.moveTo(a,y);x.lineTo(b,y);x.stroke();x.restore()}
   function wrap(t,w){
     var out=[];String(t||'').split('\n').forEach(function(par){
       var words=par.split(/\s+/).filter(Boolean),line='';
@@ -622,52 +623,55 @@ function drawContract(cv,c,A){
   }
   function paint(f){
     x.setTransform(K,0,0,K,0,0);x.fillStyle='#fff';x.fillRect(0,0,W,H);x.textBaseline='alphabetic';
-    if(A.logo){x.globalAlpha=.075;var ww=418;x.drawImage(A.logo,(W-ww)/2,H*.325,ww,ww*A.logo.height/A.logo.width);x.globalAlpha=1}
+    /* إطار رفيع */
+    x.strokeStyle='#e3c9a3';x.lineWidth=.8;x.strokeRect(12,12,W-24,H-24);
+    if(A.logo){x.globalAlpha=.07;var ww=290;x.drawImage(A.logo,(W-ww)/2,H*.33,ww,ww*A.logo.height/A.logo.width);x.globalAlpha=1}
     /* الشعار */
-    if(A.logo){var lh=166,lw=lh*A.logo.width/A.logo.height;x.drawImage(A.logo,(W-lw)/2,26,lw,lh)}
+    if(A.logo){var lh=104,lw=lh*A.logo.width/A.logo.height;x.drawImage(A.logo,(W-lw)/2,18,lw,lh)}
     /* No: */
-    F('700',18,'Georgia, "Times New Roman", serif');T('No:',54,112,'left',RED,'ltr');
+    var L=M+4;
+    F('700',13,SER);T('No:',L,72,'left',RED,'ltr');
     var nt=c.noText||(num(c.total)?String(c.total):'');
-    fit(nt,140,22,'700');T(nt,96,110,'left',PEN,'ltr');dots(92,236,118);
-    var t=num(c.total),p=num(c.paid),r=t-p;F('700',16);
-    if(p)T('واصل '+fmt(p),236,142,'right',PEN);
-    if(t&&p&&r>0)T('باقي '+fmt(r),236,164,'right',PEN);
+    fit(nt,96,16,'700');T(nt,L+29,71,'left',PEN,'ltr');dots(L+27,L+128,76);
+    var t=num(c.total),p=num(c.paid),r=t-p;F('700',11.5);
+    if(p)T('واصل '+fmt(p),L+128,93,'right',PEN);
+    if(t&&p&&r>0)T('باقي '+fmt(r),L+128,109,'right',PEN);
     /* العنوان */
-    var title='عقد تنظيم حفلة (بوفيه)';F('900',23);var tw=x.measureText(title).width+44;
-    x.fillStyle='#f7a23b';x.fillRect((W-tw)/2,202,tw,36);x.fillStyle='#222';x.fillRect((W-tw)/2,236,tw,2.5);
-    T(title,W/2,228,'center','#111');
+    var title='عقد تنظيم حفلة (بوفيه)';F('900',16.5);var tw=x.measureText(title).width+30;
+    x.fillStyle='#f7a23b';x.fillRect((W-tw)/2,130,tw,26);x.fillStyle='#222';x.fillRect((W-tw)/2,155,tw,1.8);
+    T(title,W/2,148.5,'center','#111');
     /* الحقول */
-    var R=W-54,LB=128,vx1=54,vx2=R-LB-6,vc=(vx1+vx2)/2,y=262*1,rh=Math.max(26,36*f);
+    var R=W-M,LB=88,vx1=M,vx2=R-LB-4,vc=(vx1+vx2)/2,y=160,rh=Math.max(18,24*f);
     var rows=[['تاريخ الحفلة :',c.date?wday(c.date)+'     '+dmy(c.date):''],['التوقيت :',c.time],['الإسم :',c.name],['رقم الهاتف :',c.phone],['الموقع :',c.location],['العدد :',c.count]];
     rows.forEach(function(rw){
-      y+=rh;F('800',17);T(rw[0],R,y,'right','#111');
-      var v=rw[1]||'';if(v){var s=fit(v,vx2-vx1-10,17,'700');T(v,vc,y-2,'center',PEN,rw[0]==='رقم الهاتف :'?'ltr':'rtl')}
-      dots(vx1,vx2,y+6);
+      y+=rh;F('800',12.5);T(rw[0],R,y,'right','#111');
+      var v=rw[1]||'';if(v){fit(v,vx2-vx1-8,12.5,'700');T(v,vc,y-1.5,'center',PEN,rw[0]==='رقم الهاتف :'?'ltr':'rtl')}
+      dots(vx1,vx2,y+4.5);
     });
     /* طلبات خاصة */
-    y+=rh;F('800',17);T('طلبات خاصة :',R,y,'right','#111');
-    F('700',Math.max(12,16*f));var lines=wrap(c.requests,vx2-vx1-8),nL=Math.max(Math.round(3*f+.4),lines.length),lh2=Math.max(22,31*f);
-    for(var i=0;i<nL;i++){var ly=y+i*lh2;if(lines[i])T(lines[i],vx2-2,ly-2,'right',PEN);dots(i?54:vx1,i?vx2+LB:vx2,ly+6)}
-    y+=(nL-1)*lh2+6;
+    y+=rh;F('800',12.5);T('طلبات خاصة :',R,y,'right','#111');
+    F('700',Math.max(9,11.5*f));var lines=wrap(c.requests,vx2-vx1-6),nL=Math.max(Math.round(2*f+.4),lines.length),lh2=Math.max(15,21*f);
+    for(var i=0;i<nL;i++){var ly=y+i*lh2;if(lines[i])T(lines[i],vx2-2,ly-1.5,'right',PEN);dots(i?M:vx1,i?vx2+LB:vx2,ly+4.5)}
+    y+=(nL-1)*lh2+4;
     /* الأقسام */
     function head(s,yy){
-      F('900',16.5);var wa=x.measureText(s.ar).width;F('700',14,'Georgia, "Times New Roman", serif');var we=x.measureText(s.en).width;
-      var g=12,tot=wa+we+g*2+4,sx=(W-tot)/2;
-      x.fillStyle=RED;T(s.en,sx,yy,'left',RED,'ltr');x.fillRect(sx,yy+4,we,1.5);
-      F('700',16);T('|',sx+we+g,yy,'left','#333','ltr');
-      F('900',16.5);T(s.ar,sx+tot,yy,'right',RED);x.fillStyle=RED;x.fillRect(sx+tot-wa,yy+4,wa,1.5);
+      F('900',12);var wa=x.measureText(s.ar).width;F('700',10,SER);var we=x.measureText(s.en).width;
+      var g=8,tot=wa+we+g*2+3,sx=(W-tot)/2;
+      T(s.en,sx,yy,'left',RED,'ltr');x.fillStyle=RED;x.fillRect(sx,yy+3,we,1.1);
+      F('700',12);T('|',sx+we+g,yy,'left','#333','ltr');
+      F('900',12);T(s.ar,sx+tot,yy,'right',RED);x.fillStyle=RED;x.fillRect(sx+tot-wa,yy+3,wa,1.1);
     }
-    var ir=Math.max(21,29*f),isz=Math.max(11.5,16*f);
+    var ir=Math.max(15,20*f),isz=Math.max(9,11.5*f),gap=22;
     SECTIONS.forEach(function(s){
       if(s.k==='drinks')return;
       var list=(c.sections[s.k]||[]);
-      y+=Math.max(26,34*f);head(s,y);y+=Math.max(4,6*f);
-      var cw=(W-108-2*40)/3,nr=Math.max(2,Math.ceil(list.length/3));
+      y+=Math.max(19,25*f);head(s,y);y+=Math.max(2,4*f);
+      var cw=(W-2*M-2*gap)/3,nr=Math.max(2,Math.ceil(list.length/3));
       for(var rr=0;rr<nr;rr++){
         var by=y+(rr+1)*ir;
         for(var ci=0;ci<3;ci++){
-          var cx=R-cw/2-ci*(cw+40),it=list[rr*3+ci]||'';
-          if(it){fit(it,cw-6,isz,'700');T(it,cx,by-5,'center',PEN)}
+          var cx=R-cw/2-ci*(cw+gap),it=list[rr*3+ci]||'';
+          if(it){fit(it,cw-4,isz,'700');T(it,cx,by-3.5,'center',PEN)}
           dots(cx-cw/2,cx+cw/2,by);
         }
       }
@@ -675,31 +679,32 @@ function drawContract(cv,c,A){
     });
     /* المشروبات + التوقيع + الختم */
     var dk=SECTIONS[SECTIONS.length-1],dl=(c.sections.drinks||[]),top=y;
-    y+=Math.max(28,36*f);head(dk,y);y+=Math.max(4,6*f);
-    var dw=330,dn=Math.max(3,dl.length);
-    for(var di=0;di<dn;di++){var dy=y+(di+1)*ir;if(dl[di]){fit(dl[di],dw-6,isz,'700');T(dl[di],W/2,dy-5,'center',PEN)}dots(W/2-dw/2,W/2+dw/2,dy)}
+    y+=Math.max(20,26*f);head(dk,y);y+=Math.max(2,4*f);
+    var dw=210,dn=Math.max(3,dl.length);
+    for(var di=0;di<dn;di++){var dy=y+(di+1)*ir;if(dl[di]){fit(dl[di],dw-4,isz,'700');T(dl[di],W/2,dy-3.5,'center',PEN)}dots(W/2-dw/2,W/2+dw/2,dy)}
     y+=dn*ir;
-    var mid=(top+y)/2+8;
-    F('900',17);T(c.signer||'',R-8,mid-14,'right','#2b2f8f');
-    if(A.sign){var sw=190;x.drawImage(A.sign,R-sw,mid-4,sw,sw*A.sign.height/A.sign.width)}
-    if(A.stamp){var ss=Math.min(170,Math.max(120,y-top));x.drawImage(A.stamp,54,mid-ss/2,ss,ss*A.stamp.height/A.stamp.width)}
-    var end=Math.max(y,mid+85);
+    var mid=(top+y)/2+6;
+    F('900',12.5);T(c.signer||'',R-4,mid-10,'right','#2b2f8f');
+    if(A.sign){var sw=124;x.drawImage(A.sign,R-sw,mid-3,sw,sw*A.sign.height/A.sign.width)}
+    if(A.stamp){var ss=Math.min(112,Math.max(84,y-top));x.drawImage(A.stamp,M,mid-ss/2,ss,ss*A.stamp.height/A.stamp.width)}
+    var end=Math.max(y,mid+58);
     /* الفوتر */
-    x.fillStyle='#c98a3a';x.fillRect(54,H-84,W-108,2.4);
-    F('900',24);T('+971 50 088 8917   |   @tanourko',W/2,H-50,'center','#3a2a1c','ltr');
-    F('500',13);T('Al Ain - Behind Bawadi Mall',W/2-30,H-24,'right','#555','ltr');T('العين - خلف البوادي مول',W/2+30,H-24,'left','#555','rtl');
-    x.fillStyle='#d08a2a';x.beginPath();x.arc(W/2-30-x.measureText('Al Ain - Behind Bawadi Mall').width-10,H-28.5,4,0,7);x.fill();
-    F('500',13);x.beginPath();x.arc(W/2+30+x.measureText('العين - خلف البوادي مول').width+10,H-28.5,4,0,7);x.fill();
+    x.fillStyle='#c98a3a';x.fillRect(M,H-62,W-2*M,1.8);
+    F('900',17);T('+971 50 088 8917   |   @tanourko',W/2,H-38,'center','#3a2a1c','ltr');
+    F('500',9.5);var en='Al Ain - Behind Bawadi Mall',ar='العين - خلف البوادي مول';
+    T(en,W/2-20,H-21,'right','#555','ltr');T(ar,W/2+20,H-21,'left','#555','rtl');
+    x.fillStyle='#d08a2a';x.beginPath();x.arc(W/2-20-x.measureText(en).width-8,H-24.3,2.8,0,7);x.fill();
+    x.beginPath();x.arc(W/2+20+x.measureText(ar).width+8,H-24.3,2.8,0,7);x.fill();
     return end;
   }
-  var fs=[1,.94,.88,.82,.76,.7,.64,.58,.52];
-  for(var k=0;k<fs.length;k++){if(paint(fs[k])<=H-100)return cv}
+  var fs=[1,.95,.9,.85,.8,.75,.7,.65,.6,.55];
+  for(var k=0;k<fs.length;k++){if(paint(fs[k])<=H-70)return cv}
   return cv;
 }
 function makePdf(pages){
   var enc=new TextEncoder(),parts=[],off=0,xr=[];
   function w(s){var b=typeof s==='string'?enc.encode(s):s;parts.push(b);off+=b.length}
-  var PW=595.28,PH=841.89,n=pages.length;
+  var PW=419.53,PH=595.28,n=pages.length; /* A5 = نصف A4 */
   w('%PDF-1.4\n');w(new Uint8Array([0x25,0xE2,0xE3,0xCF,0xD3,0x0A]));
   xr[1]=off;w('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
   var kids=[];for(var i=0;i<n;i++)kids.push((3+3*i)+' 0 R');
@@ -719,7 +724,7 @@ async function buildPdf(list){
   var A=await pdfAssets(),pages=[],urls=[];
   for(var i=0;i<list.length;i++){
     var cv=drawContract(document.createElement('canvas'),list[i],A);
-    var blob=await new Promise(function(r){cv.toBlob(r,'image/jpeg',.9)});
+    var blob=await new Promise(function(r){cv.toBlob(r,'image/jpeg',.88)});
     if(!blob)throw new Error('canvas');
     pages.push({bytes:new Uint8Array(await blob.arrayBuffer()),w:cv.width,h:cv.height});
     urls.push(URL.createObjectURL(blob));
@@ -762,7 +767,7 @@ function openPdf(list,phone){
   buildPdf(list).then(function(res){
     if(stop)return;pdfJob=res;
     var name=pdfName(list),mb=(res.pdf.size/1048576).toFixed(1),one=list.length===1?list[0]:null;
-    modal('<h2>الملف جاهز ✓</h2><p class="muted">'+(list.length>1?list.length+' عقود، كل عقد في صفحة A4.':'العقد في صفحة A4 وحدة.')+' الحجم '+mb+' ميغا.</p>'+
+    modal('<h2>الملف جاهز ✓</h2><p class="muted">'+(list.length>1?list.length+' عقود، كل عقد في صفحة A5 (نصف A4).':'العقد في صفحة A5 (نصف A4).')+' الحجم '+mb+' ميغا.</p>'+
       '<div class="pacts">'+
       '<button class="btn" id="pWa" style="background:#1FA855;border-color:#1FA855;color:#fff">إرسال PDF على واتساب</button>'+
       '<button class="btn primary" id="pPrint">طباعة</button>'+
@@ -828,8 +833,8 @@ $('csvBtn').onclick=function(){
   var csv='﻿'+rows.map(function(r){return r.map(function(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(',')}).join('\n');
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='tanourko-contracts-'+today()+'.csv';a.click();
 };
-/* الطباعة: الورقة كاملة على صفحة A4 وحدة */
-window.addEventListener('beforeprint',function(){var sh=$('sheet');sh.style.removeProperty('--pz');sh.style.removeProperty('--ph');sh.style.minHeight='0';var h=sh.offsetHeight;sh.style.minHeight='';var z=Math.min(1,1118/h);sh.style.setProperty('--pz',z);sh.style.setProperty('--ph',Math.floor(1118/z)+'px');sh.style.setProperty('--pw',Math.floor(792/z)+'px')});
+/* الطباعة: الورقة كاملة على صفحة A5 (نصف A4) وحدة — 559×794px */
+window.addEventListener('beforeprint',function(){var sh=$('sheet');sh.style.removeProperty('--pz');sh.style.removeProperty('--ph');sh.style.minHeight='0';var h=sh.offsetHeight;sh.style.minHeight='';var z=Math.min(557/794,790/h);sh.style.setProperty('--pz',z);sh.style.setProperty('--ph',Math.floor(790/z)+'px');sh.style.setProperty('--pw',Math.floor(557/z)+'px')});
 window.addEventListener('afterprint',function(){var sh=$('sheet');['--pz','--ph','--pw'].forEach(function(k){sh.style.removeProperty(k)})});
 window.addEventListener('beforeunload',function(e){if(cur&&curDirty){e.preventDefault();e.returnValue=''}});
 window.addEventListener('online',function(){var l=lsGet(CACHE_KEY,null);if(l&&l.pending)persist().then(renderList)});
