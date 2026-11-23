@@ -106,7 +106,7 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 60px}
 .logo{grid-column:2;grid-row:1;text-align:center;line-height:0}
 .logo img{height:176px;width:auto;display:block;margin:0 auto}
 .wm{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-.wm img{position:absolute;left:50%;top:32.5%;width:418px;transform:translateX(-50%);opacity:.075}
+.wm img{position:absolute;left:50%;top:50%;height:92%;width:auto;max-width:94%;object-fit:contain;transform:translate(-50%,-50%);opacity:.075}
 .sheet>*:not(.wm){position:relative;z-index:1}
 .titlebar{align-self:center;margin:10px 0 16px;background:#f7a23b;color:#111;font-weight:900;font-size:24px;padding:3px 22px;border-bottom:2.5px solid #222;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .frow{display:flex;align-items:flex-end;gap:10px;margin-bottom:6px;min-height:36px}
@@ -169,7 +169,7 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 60px}
   .logo{grid-column:1/-1;grid-row:1}
   .s-no{grid-column:1/-1;grid-row:2;padding-top:10px}
   .logo img{height:140px}
-  .wm img{width:min(418px,80%)}
+  .wm img{height:92%;width:auto}
   .titlebar{font-size:19px;padding:5px 22px}
   .frow .lb{width:96px;font-size:15px}
   .sheet input,.sheet textarea{font-size:16px}
@@ -211,7 +211,7 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 60px}
   .s-bottom{grid-template-columns:190px 1fr 190px}
   .drinks{grid-column:2;grid-row:1}.sign{grid-column:1;grid-row:1}.stamp{grid-column:3;grid-row:1;width:170px;height:170px}
   .frow .lb{width:128px;font-size:17px}
-  .wm img{width:418px}
+  .wm img{height:92%;width:auto}
   .s-foot .c2 i{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .s-foot .c1{font-size:23px}.s-foot .c2{flex-direction:row;gap:30px;font-size:13px}
 }
@@ -622,7 +622,7 @@ function drawContract(cv,c,A){
   }
   function paint(f){
     x.setTransform(K,0,0,K,0,0);x.fillStyle='#fff';x.fillRect(0,0,W,H);x.textBaseline='alphabetic';
-    if(A.logo){x.globalAlpha=.075;var ww=418;x.drawImage(A.logo,(W-ww)/2,H*.325,ww,ww*A.logo.height/A.logo.width);x.globalAlpha=1}
+    if(A.logo){x.globalAlpha=.075;var wh=H*.92,ww=wh*A.logo.width/A.logo.height;if(ww>W*.94){ww=W*.94;wh=ww*A.logo.height/A.logo.width}x.drawImage(A.logo,(W-ww)/2,(H-wh)/2,ww,wh);x.globalAlpha=1}
     /* الشعار */
     if(A.logo){var lh=166,lw=lh*A.logo.width/A.logo.height;x.drawImage(A.logo,(W-lw)/2,26,lw,lh)}
     /* No: */
