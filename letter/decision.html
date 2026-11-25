@@ -1,0 +1,79 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--brown:#3c1c0e;--brown2:#2B1A10;--orange:#E8641B;--gold:#f0ac3f;--cream:#faf1e2}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:794px;height:1123px;background:#fff;font-family:'Tajawal',sans-serif;color:var(--brown2)}
+.page{position:relative;width:794px;height:1123px;overflow:hidden;background:linear-gradient(180deg,#fffdf9,#fbf4e8)}
+.top{height:150px;background:linear-gradient(135deg,var(--brown) 0%,#5a2a12 55%,var(--orange) 140%);display:flex;align-items:center;justify-content:space-between;padding:0 56px;position:relative}
+.top::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:6px;background:linear-gradient(90deg,var(--gold),var(--orange),var(--gold))}
+.logo-badge{width:120px;height:120px;background:var(--cream);border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid var(--gold);box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.logo-badge img{height:100px}
+.brand{color:#fff;text-align:right}
+.brand h1{font-size:34px;font-weight:800;letter-spacing:.5px}
+.brand p{font-size:15px;color:var(--gold);letter-spacing:4px;margin-top:4px;font-weight:700;direction:ltr;text-align:right}
+.meta{display:flex;justify-content:space-between;padding:34px 64px 0;font-size:16px;color:#7a5a45}
+.meta b{color:var(--brown)}
+.body{padding:30px 64px 0}
+.to{font-size:26px;font-weight:800;color:var(--brown)}
+.to span{color:var(--orange)}
+.greet{font-size:19px;margin-top:14px;color:#5a3b27}
+.subject{margin:28px 0 26px;background:var(--brown);color:#fff;border-radius:12px;padding:16px 22px;font-size:20px;font-weight:700;border-right:8px solid var(--gold)}
+.subject small{color:var(--gold);font-weight:800;margin-left:8px}
+.text{font-family:'Amiri',serif;font-size:25px;line-height:2.05;text-align:justify;color:#2B1A10}
+.text strong{color:var(--orange)}
+.note{margin-top:26px;background:#fff;border:1.5px dashed var(--gold);border-radius:12px;padding:16px 22px;font-size:18px;line-height:1.8;color:#5a3b27;display:flex;gap:14px;align-items:center}
+.note .ico{flex:none;width:44px;height:44px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800}
+.close{font-family:'Amiri',serif;font-size:23px;margin-top:30px;color:var(--brown)}
+.sign{display:flex;justify-content:space-between;align-items:flex-end;padding:36px 64px 0}
+.sign .who{font-size:20px;font-weight:800;color:var(--brown)}
+.sign .who div{font-size:16px;font-weight:500;color:#7a5a45;margin-top:6px}
+.stamp{width:190px;height:110px;border:2px dashed #cdb08a;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#b4926a;font-size:15px}
+.foot{position:absolute;bottom:0;left:0;right:0;height:62px;background:var(--brown);color:var(--cream);display:flex;align-items:center;justify-content:center;gap:18px;font-size:15px}
+.foot::before{content:"";position:absolute;top:-5px;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--gold),var(--orange),var(--gold))}
+.foot .dot{width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.wm{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);width:430px;opacity:.05;pointer-events:none}
+.signs{display:flex;justify-content:space-between;align-items:stretch;gap:22px;padding:30px 64px 0}
+.sbox{flex:1;background:#fff;border:1.5px solid #ead7bb;border-top:5px solid var(--orange);border-radius:12px;padding:14px 18px 18px}
+.role{font-size:19px;font-weight:800;color:var(--brown);text-align:center;margin-bottom:10px}
+.ln{display:flex;align-items:flex-end;gap:8px;font-size:15px;color:#7a5a45;margin-top:22px}
+.ln i{flex:1;border-bottom:1.5px dotted #b4926a;height:1px}
+.stamp{flex:none;width:120px;height:120px;border-radius:50%;border:2px dashed #cdb08a;display:flex;align-items:center;justify-content:center;color:#b4926a;font-size:15px}
+.close{margin-top:22px!important}
+.nm{text-align:center;font-family:'Amiri',serif;font-size:24px;font-weight:700;color:var(--orange);margin-top:4px}
+.owner-gap{height:0}
+.sbox .ln{margin-top:34px}
+.sig{height:50px;margin-top:14px;display:flex;justify-content:center;align-items:flex-end;margin-bottom:-30px;position:relative;z-index:2}
+.sig img{height:62px;mix-blend-mode:multiply}
+.stampimg{flex:none;align-self:center;width:150px;height:150px;object-fit:contain;mix-blend-mode:multiply;transform:rotate(-12deg);opacity:.92}
+.dtitle{text-align:center;font-size:40px;font-weight:800;color:var(--brown);margin-top:4px}
+.dtitle::after{content:"";display:block;width:90px;height:4px;background:var(--orange);border-radius:4px;margin:10px auto 0}
+.body .subject{margin:22px 0 20px;text-align:center}
+.intro{font-family:'Amiri',serif;font-size:23px;line-height:1.9;margin-bottom:14px}
+.intro b{color:var(--orange)}
+.art{display:flex;gap:16px;align-items:flex-start;background:#fff;border:1.5px solid #ead7bb;border-radius:12px;padding:12px 18px;margin-bottom:12px}
+.art .n{flex:none;width:38px;height:38px;border-radius:50%;background:var(--brown);color:var(--gold);font-weight:800;font-size:19px;display:flex;align-items:center;justify-content:center;margin-top:6px}
+.art p{font-family:'Amiri',serif;font-size:21px;line-height:1.85;text-align:justify}
+.art strong{color:var(--orange)}
+</style></head><body><div class="page">
+<img class="wm" src="logo.webp">
+<div class="top">
+  <div class="brand"><h1>مطعم ومطبخ تنوركو</h1><p>TANOURKO RESTAURANT &amp; KITCHEN</p></div>
+  <div class="logo-badge"><img src="logo.webp"></div>
+</div>
+<div class="meta"><div><b>التاريخ:</b> 25 / 11 / 2026</div><div><b>رقم القرار:</b> ...... / 2026</div></div>
+<div class="body">
+  <div class="dtitle">قرار إداري</div>
+  <div class="subject"><small>بشأن:</small> تعيين السيد / عصام مسؤولاً للحسابات</div>
+  <p class="intro">إن إدارة مطعم ومطبخ تنوركو، وبناءً على مقتضيات مصلحة العمل، <b>تقرر ما يلي:</b></p>
+  <div class="art"><div class="n">1</div><p>تعيين السيد / <strong>عصام</strong> في وظيفة <strong>مسؤول الحسابات</strong> في مطعم ومطبخ تنوركو، اعتباراً من تاريخ 25 / 11 / 2026.</p></div>
+  <div class="art"><div class="n">2</div><p>يتولى المذكور الإشراف على جميع الأعمال المالية والمحاسبية للمطعم، من متابعة الإيرادات والمصروفات والفواتير والمشتريات، وإعداد التقارير المالية الدورية ورفعها إلى الإدارة.</p></div>
+  <div class="art"><div class="n">3</div><p>يُعمل بهذا القرار من تاريخ صدوره، ويُبلَّغ إلى من يلزم لتنفيذه.</p></div>
+</div>
+<div class="signs">
+  <div class="sbox"><div class="role">صاحب المطعم</div><div class="nm">أبو خليفة</div><div class="sig"><img src="owner-sign.png"></div><div class="ln"><span>التوقيع:</span><i></i></div></div>
+  <img class="stampimg" src="stamp.webp">
+  <div class="sbox"><div class="role">مدير المطعم</div><div class="nm">محمود</div><div class="sig"><img src="sign.webp"></div><div class="ln"><span>التوقيع:</span><i></i></div></div>
+</div>
+<div class="foot"><span>مطعم ومطبخ تنوركو</span><span class="dot"></span><span>TANOURKO RESTAURANT &amp; KITCHEN</span></div>
+</div></body></html>
