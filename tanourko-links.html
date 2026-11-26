@@ -251,11 +251,21 @@
   @keyframes occShine{0%,60%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
   .occ-card .occ-ic:empty{display:none}
   .occ-card .occ-t,.occ-card .occ-s{position:relative;z-index:2;transition:opacity .9s ease}
-  .occ-national .occ-card{padding:34px 18px 22px;min-height:150px;cursor:pointer;background:radial-gradient(120% 90% at 50% 0%,rgba(40,30,70,.9),rgba(14,10,24,.92))}
-  .occ-national .occ-card .occ-t{color:#fff;font-size:30px;text-shadow:0 0 18px rgba(248,216,150,.55)}
-  .occ-national .occ-card .occ-s{transition-delay:.45s}
-  .occ-fw{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
-  .occ-fw-run .occ-card .occ-t,.occ-fw-run .occ-card .occ-s{opacity:0;transition-delay:0s}
+  /* عيد الاتحاد: مفرقعات يمين ويسار اللوجو ثم «عيد الاتحاد» يمين و«55» يسار ثم «دام عزّك يا وطن» */
+  .occ-national .occ-card{background:none;border:0;box-shadow:none;padding:2px 10px 6px;margin:-6px auto 14px}
+  .occ-national .occ-card::after{display:none}
+  .occ-national .occ-card .occ-t{display:none}
+  .occ-national .occ-card .occ-s{font-size:22px;font-weight:900;opacity:1;color:#fff;transition:opacity 1s ease .2s;
+    text-shadow:0 2px 0 rgba(120,32,0,.55),0 0 18px rgba(255,214,120,.8)}
+  .nd-fx{position:absolute;left:0;pointer-events:none;z-index:4}
+  .nd-fx canvas{position:absolute;inset:0;width:100%;height:100%}
+  .nd-w{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    color:#fff;font-weight:900;line-height:1.15;transition:opacity 1s ease;
+    text-shadow:0 2px 0 rgba(120,32,0,.6),0 0 14px rgba(255,214,120,.85),0 0 28px rgba(255,170,60,.55)}
+  .nd-w span{display:block;white-space:nowrap}
+  .nd-r span{font-size:var(--ndr,27px)}
+  .nd-l span{font-size:var(--ndl,58px);letter-spacing:1px;color:#fff3cf}
+  .occ-fw-run .nd-w,.occ-fw-run .occ-card .occ-s{opacity:0;transition-delay:0s}
   .occ-spark{position:fixed;inset:0;pointer-events:none;z-index:0;display:none}
   .occ-eid .occ-spark{display:block}
   .occ-spark i{position:absolute;top:-12px;width:7px;height:11px;border-radius:2px;opacity:.9;animation:occFall linear infinite}
@@ -980,7 +990,7 @@
       'ramadan':{ic:'🌙',ar:['رمضان كريم','تقبّل الله صيامكم وقيامكم · أطباق الفطور والسحور جاهزة'],en:['Ramadan Kareem','Iftar &amp; Suhoor dishes are ready'],cls:'occ-ramadan'},
       'eid-fitr':{ic:'✨',ar:['عيد فطر مبارك','عساكم من عوّاده · كل عام وأنتم بخير'],en:['Eid Mubarak','Wishing you a blessed Eid al-Fitr'],cls:'occ-eid'},
       'eid-adha':{ic:'🐑',ar:['عيد أضحى مبارك','عساكم من عوّاده · كل عام وأنتم بخير'],en:['Eid al-Adha Mubarak','Wishing you a blessed Eid'],cls:'occ-eid'},
-      'national':{ic:'',ar:['عيد الاتحاد '+nat,'كل عام والإمارات بخير · دام عزّك يا وطن'],en:['UAE National Day '+nat,'Happy Eid Al Etihad'],cls:'occ-national'}
+      'national':{ic:'',ar:['عيد الاتحاد '+nat,'دام عزّك يا وطن'],en:['UAE National Day '+nat,'Happy Eid Al Etihad'],cls:'occ-national'}
     }[occ];
     if(!T)return;
     document.body.classList.add('occ-on',T.cls);
@@ -995,74 +1005,110 @@
       var moon='<svg style="left:46%" width="40" height="70" viewBox="0 0 40 70"><line x1="20" y1="0" x2="20" y2="28" stroke="#f8d896" stroke-width="1.2"/><path d="M27 30a16 16 0 1 0 0 30a12.5 12.5 0 1 1 0-30z" fill="#f8d896"/></svg>';
       document.getElementById('occDeco').innerHTML=lantern(6,22,1)+lantern(22,48,.8)+moon+lantern(70,40,.85)+lantern(86,18,1);
     }
-    /* عيد الاتحاد: مفرقعات تنفجر ثم تتجمّع شراراتها لتكتب «عيد الاتحاد 55» — اضغط البطاقة لإعادتها */
-    if(T.cls==='occ-national'&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)&&window.requestAnimationFrame){
-      var card=document.getElementById('occCard'),cv=document.createElement('canvas'),busy=false;
-      cv.className='occ-fw';cv.setAttribute('aria-hidden','true');card.insertBefore(cv,card.firstChild);
-      var COL=['#f8d896','#f0ac3f','#ffffff','#ff5a5a','#4ee08f','#ffd36b'];
+    /* عيد الاتحاد: مفرقعات يمين ويسار اللوجو، ثم تتجمّع الشرارات لتكتب «عيد الاتحاد» يميناً و«55» يساراً، ثم «دام عزّك يا وطن».
+       اضغط اللوجو لإعادة العرض */
+    if(T.cls==='occ-national'){
+      var logo=document.getElementById('siteLogo');
+      var fx=document.createElement('div');fx.className='nd-fx';fx.setAttribute('aria-hidden','true');
+      fx.innerHTML='<canvas></canvas><div class="nd-w nd-r"><span data-ar="عيد" data-en="National">عيد</span><span data-ar="الاتحاد" data-en="Day">الاتحاد</span></div><div class="nd-w nd-l"><span>'+nat+'</span></div>';
+      document.body.appendChild(fx);
+      var cv=fx.querySelector('canvas'),wr=fx.querySelector('.nd-r'),wl=fx.querySelector('.nd-l');
+      if(en){wr.children[0].textContent='National';wr.children[1].textContent='Day'}
+      var G={};
+      var layout=function(){
+        var vw=document.documentElement.clientWidth,lr=logo.getBoundingClientRect(),sy=window.pageYOffset||0;
+        var lw=logo.offsetWidth,cx=lr.left+lr.width/2,L=cx-lw/2,Rt=cx+lw/2;
+        var top=lr.top+sy-20,h=Math.max(160,lr.height*.75);
+        fx.style.top=top+'px';fx.style.width=vw+'px';fx.style.height=h+'px';
+        var side=Math.max(70,Math.min(170,L-4)),mid=20+lr.height*.33;
+        fx.style.setProperty('--ndr',Math.round(Math.min(40,side*.37))+'px');
+        fx.style.setProperty('--ndl',Math.round(Math.min(86,side*.78))+'px');
+        /* يمين الشاشة = بعد اللوجو */
+        wr.style.left=(Rt+2)+'px';wr.style.width=side+'px';wr.style.top='0';wr.style.height=(mid*2)+'px';
+        wl.style.left=(L-2-side)+'px';wl.style.width=side+'px';wl.style.top='0';wl.style.height=(mid*2)+'px';
+        G={W:vw,H:h,rx:Rt+2+side/2,lx:L-2-side/2,my:mid};
+      };
+      layout();
+      var reduced=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var busy=false,COL=['#ffffff','#fff27a','#d0102c','#0a8f3c','#5b1a8a','#ffffff','#1f3fbf'];
       var rnd=function(a,b){return a+Math.random()*(b-a)};
+      var pick=function(){return COL[(Math.random()*COL.length)|0]};
+      var sample=function(el,W,H,box){
+        var o=document.createElement('canvas');o.width=W;o.height=H;var c=o.getContext('2d'),pts=[];
+        c.fillStyle='#fff';c.textAlign='center';c.textBaseline='middle';
+        try{c.direction=en?'ltr':'rtl'}catch(e){}
+        Array.prototype.forEach.call(el.children,function(sp){
+          var r=sp.getBoundingClientRect(),cs=getComputedStyle(sp);
+          c.font=cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;
+          c.fillText(sp.textContent,r.left-box.left+r.width/2,r.top-box.top+r.height/2);
+        });
+        var d=c.getImageData(0,0,W,H).data,st=2;
+        for(var y=0;y<H;y+=st)for(var x=0;x<W;x+=st)if(d[(y*W+x)*4+3]>140)pts.push([x,y]);
+        while(pts.length>900)pts.splice((Math.random()*pts.length)|0,1);
+        return pts;
+      };
       var play=function(){
-        if(busy)return;busy=true;document.body.classList.add('occ-fw-run');
-        var W=card.clientWidth,H=card.clientHeight,dpr=Math.min(2,window.devicePixelRatio||1);
+        if(busy)return;busy=true;layout();document.body.classList.add('occ-fw-run');
+        var W=G.W,H=G.H,dpr=Math.min(2,window.devicePixelRatio||1);
         cv.width=W*dpr;cv.height=H*dpr;var x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);
-        /* نقاط الكلمة: نرسم النص مخفياً ثم نأخذ بكسلاته */
-        var cr=card.getBoundingClientRect(),r=t.getBoundingClientRect(),cs=getComputedStyle(t);
-        var off=document.createElement('canvas');off.width=W;off.height=H;var o=off.getContext('2d');
-        o.font=cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;o.textAlign='center';o.textBaseline='middle';
-        try{o.direction=document.documentElement.getAttribute('dir')||'rtl'}catch(e){}
-        var tx=r.left-cr.left+r.width/2,ty=r.top-cr.top+r.height/2;
-        o.fillStyle='#fff';o.fillText(t.textContent,tx,ty);
-        var px=o.getImageData(0,0,W,H).data,tg=[],st=W>360?3:2;
-        for(var yy=0;yy<H;yy+=st)for(var xx=0;xx<W;xx+=st)if(px[(yy*W+xx)*4+3]>140)tg.push([xx,yy]);
-        while(tg.length>900)tg.splice((Math.random()*tg.length)|0,1);
-        var P=[],R=[],t0=null,word=null;
-        var rocket=function(ax,ay,at,fin){R.push({x:ax,y:H+4,tx:ax,ty:ay,at:at,fin:fin,done:false})};
-        rocket(W*rnd(.15,.3),H*rnd(.2,.35),0);rocket(W*rnd(.7,.85),H*rnd(.15,.3),550);
-        rocket(W*rnd(.4,.6),H*rnd(.25,.4),1100);rocket(W*rnd(.2,.8),H*rnd(.15,.3),1600);
-        rocket(tx,ty,2300,true);
-        var burst=function(bx,by,fin){
-          if(fin){word=[];tg.forEach(function(g){var a=rnd(0,6.283),v=rnd(40,190);
-            word.push({x:bx,y:by,vx:Math.cos(a)*v,vy:Math.sin(a)*v,gx:g[0],gy:g[1],c:COL[(Math.random()*COL.length)|0]})});return}
-          var c=COL[(Math.random()*COL.length)|0],c2=COL[(Math.random()*COL.length)|0];
-          for(var i=0;i<60;i++){var a=i/60*6.283,v=rnd(50,130);P.push({x:bx,y:by,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:1,c:i%3?c:c2})}
+        var box=fx.getBoundingClientRect();
+        var TR=sample(wr,W,H,box),TL=sample(wl,W,H,box);
+        var P=[],R=[],words=[],t0=null,last=null;
+        var rocket=function(ax,ay,at,tg){R.push({tx:ax,ty:ay,at:at,tg:tg,done:false,x:ax,y:H})};
+        /* مفرقعات على الجانبين بالتناوب */
+        rocket(G.rx+rnd(-25,25),H*rnd(.18,.4),0);
+        rocket(G.lx+rnd(-25,25),H*rnd(.18,.4),350);
+        rocket(G.rx+rnd(-25,25),H*rnd(.15,.35),800);
+        rocket(G.lx+rnd(-25,25),H*rnd(.15,.35),1150);
+        rocket(G.rx+rnd(-20,20),H*rnd(.25,.45),1550);
+        rocket(G.lx+rnd(-20,20),H*rnd(.25,.45),1800);
+        /* الانفجار الأخير يكتب الكلمة */
+        rocket(G.rx,G.my,2300,TR);rocket(G.lx,G.my,2450,TL);
+        var burst=function(k){
+          if(k.tg){var grp={at:performance.now(),ps:[]};k.tg.forEach(function(g){var a=rnd(0,6.283),v=rnd(30,150);
+            grp.ps.push({x:k.x,y:k.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,gx:g[0],gy:g[1],c:pick()})});words.push(grp);return}
+          var c=pick(),c2=pick();
+          for(var i=0;i<70;i++){var a=i/70*6.283,v=rnd(55,150);P.push({x:k.x,y:k.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:1,c:i%3?c:c2})}
         };
-        var last=null;
         var frame=function(now){
           if(t0===null){t0=now;last=now}
           var el=now-t0,dt=Math.min(.05,(now-last)/1000);last=now;
-          x.clearRect(0,0,W,H);x.globalCompositeOperation='lighter';
+          x.clearRect(0,0,W,H);
           R.forEach(function(k){
             if(k.done||el<k.at)return;
-            var p=Math.min(1,(el-k.at)/650),e=1-Math.pow(1-p,3);
-            k.x=k.tx;k.y=H+4+(k.ty-H-4)*e;
-            x.fillStyle='#ffe9b8';x.beginPath();x.arc(k.x,k.y,1.8,0,6.283);x.fill();
-            x.fillStyle='rgba(255,200,120,.35)';x.fillRect(k.x-.6,k.y,1.2,14);
-            if(p>=1){k.done=true;burst(k.x,k.y,k.fin)}
+            var p=Math.min(1,(el-k.at)/600),e=1-Math.pow(1-p,3);
+            k.x=k.tx;k.y=H+(k.ty-H)*e;
+            x.globalAlpha=1;x.fillStyle='#ffffff';x.beginPath();x.arc(k.x,k.y,2.4,0,6.283);x.fill();
+            x.fillStyle='rgba(255,255,255,.55)';x.fillRect(k.x-.8,k.y,1.6,18);
+            if(p>=1){k.done=true;burst(k)}
           });
           for(var i=P.length-1;i>=0;i--){var q=P[i];
-            q.vx*=.97;q.vy=q.vy*.97+60*dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.l-=dt*.75;
+            q.vx*=.97;q.vy=q.vy*.97+55*dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.l-=dt*.8;
             if(q.l<=0){P.splice(i,1);continue}
-            x.globalAlpha=q.l;x.fillStyle=q.c;x.fillRect(q.x-1,q.y-1,2.2,2.2)}
+            x.globalAlpha=q.l;x.fillStyle=q.c;x.beginPath();x.arc(q.x,q.y,2.1,0,6.283);x.fill();x.fillStyle='#fff';x.fillRect(q.x-.6,q.y-.6,1.2,1.2)}
+          var allDone=words.length===2;
+          words.forEach(function(g){
+            var ge=now-g.at,k2=Math.max(0,Math.min(1,(ge-350)/1000)),ease=k2<.5?2*k2*k2:1-Math.pow(-2*k2+2,2)/2;
+            var fade=ge>2300?Math.max(0,1-(ge-2300)/900):1;if(fade>0)allDone=false;
+            g.ps.forEach(function(q){
+              q.vx*=.92;q.vy*=.92;q.x+=q.vx*dt;q.y+=q.vy*dt;
+              var dx=q.x+(q.gx-q.x)*ease,dy=q.y+(q.gy-q.y)*ease;
+              x.globalAlpha=fade*(k2>=1?.55+.45*Math.random():1);x.fillStyle=k2>=1?'#ffffff':q.c;x.fillRect(dx-1.2,dy-1.2,2.4,2.4)});
+          });
           x.globalAlpha=1;
-          if(word){
-            var we=el-2950,k2=Math.max(0,Math.min(1,(we-350)/1100)),ease=k2<.5?2*k2*k2:1-Math.pow(-2*k2+2,2)/2;
-            var fade=el>4900?Math.max(0,1-(el-4900)/900):1;
-            word.forEach(function(q){
-              q.vx*=.93;q.vy*=.93;q.x+=q.vx*dt;q.y+=q.vy*dt;
-              var dx=q.x+(q.gx-q.x)*ease,dy=q.y+(q.gy-q.y)*ease;if(k2>=1){q.x=q.gx;q.y=q.gy}
-              x.globalAlpha=fade*(k2>=1?.6+.4*Math.random():1);x.fillStyle=k2>=1?'#fff4d6':q.c;x.fillRect(dx-1,dy-1,2,2)});
-            x.globalAlpha=1;
-            if(el>4500)document.body.classList.remove('occ-fw-run');
-            if(fade<=0){x.clearRect(0,0,W,H);busy=false;return}
-          }
-          x.globalCompositeOperation='source-over';
+          if(words.length===2&&now-words[1].at>1600)document.body.classList.remove('occ-fw-run');
+          if(allDone&&!P.length){x.clearRect(0,0,W,H);busy=false;return}
           requestAnimationFrame(frame);
         };
         requestAnimationFrame(frame);
       };
-      var go=function(){setTimeout(play,350)};
-      if(document.fonts&&document.fonts.ready)document.fonts.ready.then(go,go);else go();
-      card.addEventListener('click',play);
+      window.addEventListener('resize',function(){if(!busy)layout()});
+      if(!reduced&&window.requestAnimationFrame){
+        document.body.classList.add('occ-fw-run');
+        var go=function(){setTimeout(play,700)};
+        if(document.fonts&&document.fonts.ready)document.fonts.ready.then(go,go);else go();
+        logo.addEventListener('click',play);
+      }
     }
     if(T.cls==='occ-eid'&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)){
       var c=['#f0ac3f','#f8d896','#faf1e2','#d9691f','#ffffff'],h='';
