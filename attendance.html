@@ -150,7 +150,7 @@ td.num{font-variant-numeric:tabular-nums;direction:ltr;text-align:right}
     <div class="stats" id="todayStats"></div>
     <div class="card">
       <div class="sec-title">حضور اليوم <span class="grow"></span><input type="date" id="dayPick" class="btn" style="padding:6px 10px"><button class="btn" id="refreshBtn">تحديث</button></div>
-      <div class="tbl-wrap"><table><thead><tr><th>الموظف</th><th>الحالة</th><th>الدخول</th><th>الخروج</th><th>الساعات</th><th>التأخير</th></tr></thead><tbody id="todayBody"></tbody></table></div>
+      <div class="tbl-wrap"><table><thead><tr><th>الموظف</th><th>الحالة</th><th>الدخول</th><th>الخروج</th><th>الساعات</th><th>التأخير</th><th></th></tr></thead><tbody id="todayBody"></tbody></table></div>
     </div>
   </section>
 
@@ -173,6 +173,7 @@ td.num{font-variant-numeric:tabular-nums;direction:ltr;text-align:right}
       <select id="logEmp"></select>
       <input type="month" id="logMonth">
       <button class="btn gold" id="addPunchBtn">+ إضافة بصمة يدوية</button>
+      <button class="btn danger" id="absentBtn">🗑️ إزالة بصمة يوم (غائب)</button>
     </div>
     <div class="card">
       <div class="tbl-wrap"><table><thead><tr><th>اليوم</th><th>الوقت</th><th>النوع</th><th>الطريقة</th><th></th></tr></thead><tbody id="logBody"></tbody></table></div>
@@ -438,12 +439,12 @@ function renderToday(){
   var present=0,inNow=0,late=0,absent=0,rows='';
   cfg.staff.forEach(function(s){
     var d=daySummary(s,day),status;
-    if(!d){absent++;status='<span class="pill bad">غائب</span>';rows+='<tr><td><b>'+esc(s.name)+'</b></td><td>'+status+'</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>';return}
+    if(!d){absent++;status='<span class="pill bad">غائب</span>';rows+='<tr><td><b>'+esc(s.name)+'</b></td><td>'+status+'</td><td>—</td><td>—</td><td>—</td><td>—</td><td></td></tr>';return}
     present++;if(d.late)late++;
     if(d.open){inNow++;status='<span class="pill ok">داخل الآن</span>'}
     else if(d.missing)status='<span class="pill warn">بصمة ناقصة</span>';
     else status='<span class="pill">انصرف</span>';
-    rows+='<tr><td><b>'+esc(s.name)+'</b></td><td>'+status+'</td><td class="num">'+(d.firstIn?hm(d.firstIn):'—')+'</td><td class="num">'+(d.lastOut&&!d.open?hm(d.lastOut):'—')+'</td><td class="num">'+dur(d.work)+'</td><td>'+(d.late?'<span class="pill warn">'+(d.late>=60?dur(d.late*60000)+' س':d.late+' د')+'</span>':'—')+'</td></tr>';
+    rows+='<tr><td><b>'+esc(s.name)+'</b></td><td>'+status+'</td><td class="num">'+(d.firstIn?hm(d.firstIn):'—')+'</td><td class="num">'+(d.lastOut&&!d.open?hm(d.lastOut):'—')+'</td><td class="num">'+dur(d.work)+'</td><td>'+(d.late?'<span class="pill warn">'+(d.late>=60?dur(d.late*60000)+' س':d.late+' د')+'</span>':'—')+'</td><td><button class="btn danger" data-absent="'+s.id+'">إزالة البصمة (غائب)</button></td></tr>';
   });
   $('todayBody').innerHTML=rows;
   $('todayStats').innerHTML=
@@ -545,6 +546,29 @@ function punchForm(p){
   };
 }
 
+/* إزالة كل بصمات موظف في يوم معيّن ← يظهر «غائب» */
+async function clearDay(sid,day){
+  var s=cfg.staff.find(function(x){return x.id===sid});if(!s||!day)return false;
+  var mk=day.slice(0,7);await loadMonth(mk,true);
+  var l=listOf(mk,sid),n=l.filter(function(p){return dkey(p.t)===day}).length;
+  if(!n){toast(s.name+' ما عنده بصمات في هذا اليوم — مسجّل غائب');return false}
+  if(!confirm('إزالة '+n+' بصمة لـ '+s.name+' يوم '+day+' وتسجيله غائب؟'))return false;
+  months[mk][sid].list=l.filter(function(p){return dkey(p.t)!==day});
+  lsSet(QUEUE_KEY,lsGet(QUEUE_KEY,[]).filter(function(p){return !(p.sid===sid&&dkey(p.t)===day)}));
+  try{await saveList(mk,sid);toast('تم ✓ '+s.name+' غائب يوم '+day)}catch(e){toast('تعذر الحفظ: '+(e.message||e));return false}
+  renderAll();return true;
+}
+function absentForm(){
+  var opts=cfg.staff.map(function(s){return '<option value="'+s.id+'"'+(s.id===$('logEmp').value?' selected':'')+'>'+esc(s.name)+'</option>'}).join('');
+  modal('<h2>إزالة بصمة يوم (غائب)</h2><div style="text-align:right;margin-top:12px">'+
+    '<div class="field"><label>الموظف</label><select id="aEmp">'+opts+'</select></div>'+
+    '<div class="field"><label>اليوم</label><input id="aDate" type="date" value="'+dkey(Date.now())+'"></div>'+
+    '<p class="muted">تنحذف كل بصمات الدخول والخروج لهذا اليوم ويظهر الموظف «غائب».</p>'+
+    '</div><div class="acts"><button class="btn danger" id="aOk">إزالة وتسجيل غائب</button><button class="btn" id="mClose">إلغاء</button></div>');
+  $('mClose').onclick=closeModal;
+  $('aOk').onclick=async function(){if(await clearDay($('aEmp').value,$('aDate').value)){closeModal();renderLog()}};
+}
+
 /* ============ وضع التبصيم (قفل) ============ */
 function setKiosk(on){
   lsSet(KIOSK_KEY,on);
@@ -583,6 +607,8 @@ $('monthPick').onchange=function(){loadMonth(this.value).then(renderReport)};
 $('logMonth').onchange=function(){loadMonth(this.value).then(renderLog)};
 $('logEmp').onchange=renderLog;
 $('addPunchBtn').onclick=function(){punchForm(null)};
+$('absentBtn').onclick=absentForm;
+$('todayBody').onclick=function(e){var b=e.target.closest('[data-absent]');if(b)clearDay(b.dataset.absent,$('dayPick').value||dkey(Date.now()))};
 $('logBody').onclick=async function(e){
   var sid=$('logEmp').value,mk=$('logMonth').value,l=listOf(mk,sid);
   var ed=e.target.closest('[data-edit]'),dl=e.target.closest('[data-del]');
